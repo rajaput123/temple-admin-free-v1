@@ -1,0 +1,438 @@
+// Dummy data for PR & Communication module
+
+import type {
+  Announcement,
+  DevoteeMessage,
+  PressRelease,
+  Spokesperson,
+  MediaContact,
+  MediaQuery,
+  PressBriefing,
+  CrisisAlert,
+  CrisisTemplate,
+  SocialChannel,
+  SocialPost,
+  ContentCalendar,
+  CommunicationApproval,
+  UnauthorizedAttempt,
+  CommunicationMetrics,
+  CommunicationAuditLog,
+} from '@/types/communications';
+
+export const dummyAnnouncements: Announcement[] = [
+  {
+    id: 'ann-001',
+    title: 'Special Darshan Timings for Maha Shivaratri',
+    content: 'Due to high devotee turnout, special darshan timings have been arranged. Morning darshan: 4:00 AM - 8:00 AM, Evening darshan: 6:00 PM - 10:00 PM.',
+    contentTranslations: [
+      {
+        language: 'hi',
+        title: 'महा शिवरात्रि के लिए विशेष दर्शन समय',
+        content: 'भक्तों की अधिक संख्या के कारण, विशेष दर्शन समय की व्यवस्था की गई है। सुबह दर्शन: सुबह 4:00 - 8:00, शाम दर्शन: शाम 6:00 - 10:00।',
+      },
+    ],
+    category: 'festival',
+    channels: ['display_board', 'website', 'app', 'sms', 'whatsapp'],
+    validityStart: '2024-03-08T00:00:00Z',
+    validityEnd: '2024-03-09T23:59:59Z',
+    status: 'published',
+    priority: 'high',
+    createdBy: 'user-001',
+    createdAt: '2024-03-07T10:00:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-07T11:00:00Z',
+    publishedBy: 'user-002',
+    publishedAt: '2024-03-07T11:30:00Z',
+    version: 1,
+    isLocked: true,
+    autoExpire: true,
+    expiryNotified: false,
+  },
+  {
+    id: 'ann-002',
+    title: 'Maintenance Work in Main Sanctum',
+    content: 'The main sanctum will be closed for maintenance from 2:00 PM to 4:00 PM today. Regular darshan will resume at 4:00 PM.',
+    category: 'maintenance',
+    channels: ['display_board', 'website', 'app'],
+    validityStart: '2024-03-10T14:00:00Z',
+    validityEnd: '2024-03-10T16:00:00Z',
+    status: 'published',
+    priority: 'normal',
+    createdBy: 'user-001',
+    createdAt: '2024-03-10T09:00:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-10T09:30:00Z',
+    publishedBy: 'user-002',
+    publishedAt: '2024-03-10T09:45:00Z',
+    version: 1,
+    isLocked: true,
+    autoExpire: true,
+    expiryNotified: false,
+  },
+  {
+    id: 'ann-003',
+    title: 'New Seva Slot Available',
+    content: 'Additional Abhishekam seva slots are now available for booking. Book your slot through the counter or online portal.',
+    category: 'seva',
+    channels: ['display_board', 'app', 'sms'],
+    validityStart: '2024-03-11T00:00:00Z',
+    validityEnd: '2024-03-15T23:59:59Z',
+    status: 'draft',
+    priority: 'normal',
+    createdBy: 'user-001',
+    createdAt: '2024-03-11T08:00:00Z',
+    version: 1,
+    isLocked: false,
+    autoExpire: true,
+    expiryNotified: false,
+  },
+];
+
+export const dummyDevoteeMessages: DevoteeMessage[] = [
+  {
+    id: 'msg-001',
+    messageType: 'booking_confirmation',
+    recipientType: 'individual',
+    recipientIds: ['devotee-001'],
+    channels: ['sms', 'whatsapp'],
+    subject: 'Seva Booking Confirmed',
+    content: 'Your Abhishekam seva booking for March 15, 2024 at 6:00 AM has been confirmed. Receipt number: SB-2024-001234',
+    status: 'published',
+    priority: 'normal',
+    sentAt: '2024-03-12T10:00:00Z',
+    deliveryStatus: 'delivered',
+    deliveryDetails: [
+      {
+        channel: 'sms',
+        status: 'delivered',
+        deliveredAt: '2024-03-12T10:00:15Z',
+      },
+      {
+        channel: 'whatsapp',
+        status: 'delivered',
+        deliveredAt: '2024-03-12T10:00:20Z',
+        readAt: '2024-03-12T10:05:30Z',
+      },
+    ],
+    optOutRespected: true,
+    createdBy: 'user-001',
+    createdAt: '2024-03-12T09:55:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-12T09:58:00Z',
+    relatedBookingId: 'booking-001',
+  },
+  {
+    id: 'msg-002',
+    messageType: 'reminder',
+    recipientType: 'group',
+    recipientIds: ['booking-002', 'booking-003', 'booking-004'],
+    channels: ['sms'],
+    subject: 'Seva Reminder',
+    content: 'Reminder: Your seva is scheduled for tomorrow at 6:00 AM. Please arrive 15 minutes early.',
+    status: 'published',
+    priority: 'normal',
+    scheduledAt: '2024-03-13T18:00:00Z',
+    sentAt: '2024-03-13T18:00:00Z',
+    deliveryStatus: 'sent',
+    deliveryDetails: [
+      {
+        channel: 'sms',
+        status: 'sent',
+      },
+    ],
+    optOutRespected: true,
+    createdBy: 'user-001',
+    createdAt: '2024-03-13T17:00:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-13T17:30:00Z',
+  },
+];
+
+export const dummyPressReleases: PressRelease[] = [
+  {
+    id: 'pr-001',
+    title: 'Temple Announces Annual Festival Schedule',
+    content: 'The temple management is pleased to announce the schedule for the annual festival celebrations...',
+    status: 'published',
+    priority: 'normal',
+    spokespersonId: 'sp-001',
+    mediaContacts: ['mc-001', 'mc-002'],
+    approvedImages: ['/images/festival-2024-1.jpg'],
+    createdBy: 'user-001',
+    createdAt: '2024-03-01T10:00:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-01T11:00:00Z',
+    publishedBy: 'user-002',
+    publishedAt: '2024-03-01T12:00:00Z',
+    version: 1,
+    isLocked: true,
+  },
+];
+
+export const dummySpokespersons: Spokesperson[] = [
+  {
+    id: 'sp-001',
+    name: 'Shri Ramesh Kumar',
+    designation: 'Temple Administrator',
+    contactNumber: '+91-9876543210',
+    email: 'ramesh.kumar@temple.org',
+    authorizedFor: ['general', 'festivals', 'operations'],
+    isActive: true,
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'sp-002',
+    name: 'Shri Priya Sharma',
+    designation: 'PR Manager',
+    contactNumber: '+91-9876543211',
+    email: 'priya.sharma@temple.org',
+    authorizedFor: ['media', 'crisis', 'donations'],
+    isActive: true,
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+];
+
+export const dummyMediaContacts: MediaContact[] = [
+  {
+    id: 'mc-001',
+    name: 'Rajesh Verma',
+    organization: 'Local News Daily',
+    designation: 'Senior Reporter',
+    contactNumber: '+91-9876543220',
+    email: 'rajesh.verma@localnews.com',
+    beat: 'Religious Affairs',
+    isVerified: true,
+    notes: 'Regular coverage of temple events',
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'mc-002',
+    name: 'Anita Desai',
+    organization: 'Regional TV',
+    designation: 'News Anchor',
+    contactNumber: '+91-9876543221',
+    email: 'anita.desai@regionaltv.com',
+    beat: 'Community Events',
+    isVerified: true,
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+];
+
+export const dummyMediaQueries: MediaQuery[] = [
+  {
+    id: 'mq-001',
+    queryText: 'Can you provide details about the upcoming festival arrangements?',
+    mediaContactId: 'mc-001',
+    status: 'responded',
+    priority: 'normal',
+    receivedAt: '2024-03-05T10:00:00Z',
+    respondedAt: '2024-03-05T14:00:00Z',
+    responseText: 'We have scheduled a press briefing on March 10th. Please find the details...',
+    respondedBy: 'user-002',
+  },
+];
+
+export const dummyPressBriefings: PressBriefing[] = [
+  {
+    id: 'pb-001',
+    title: 'Annual Festival Press Briefing',
+    scheduledAt: '2024-03-10T15:00:00Z',
+    location: 'Temple Conference Hall',
+    spokespersonId: 'sp-001',
+    mediaContactIds: ['mc-001', 'mc-002'],
+    agenda: 'Announcement of festival schedule, arrangements, and special programs',
+    status: 'scheduled',
+    createdBy: 'user-001',
+    createdAt: '2024-03-01T10:00:00Z',
+  },
+];
+
+export const dummyCrisisAlerts: CrisisAlert[] = [
+  {
+    id: 'ca-001',
+    crisisType: 'crowd_control',
+    title: 'High Crowd Alert - Main Entrance',
+    content: 'Due to high devotee turnout, please use alternative entrances. Main entrance temporarily restricted.',
+    priority: 'urgent',
+    channels: ['display_board', 'app', 'sms'],
+    geoTargeted: true,
+    geoLocation: {
+      zoneId: 'zone-001',
+      coordinates: { lat: 28.6139, lng: 77.2090 },
+      radius: 500,
+    },
+    status: 'published',
+    isEmergencyOverride: true,
+    emergencyJustification: 'Immediate crowd control required to prevent stampede',
+    validityStart: '2024-03-15T10:00:00Z',
+    validityEnd: '2024-03-15T12:00:00Z',
+    createdBy: 'user-001',
+    createdAt: '2024-03-15T09:55:00Z',
+    approvedBy: 'user-003',
+    approvedAt: '2024-03-15T09:56:00Z',
+    publishedBy: 'user-003',
+    publishedAt: '2024-03-15T09:57:00Z',
+    incidentTimeline: [
+      {
+        timestamp: '2024-03-15T09:50:00Z',
+        event: 'Crowd surge detected',
+        description: 'Main entrance crowd exceeded capacity',
+        actionTaken: 'Alert issued, alternative routes activated',
+        recordedBy: 'user-001',
+      },
+    ],
+  },
+];
+
+export const dummyCrisisTemplates: CrisisTemplate[] = [
+  {
+    id: 'ct-001',
+    name: 'Crowd Control Alert',
+    crisisType: 'crowd_control',
+    titleTemplate: 'High Crowd Alert - {location}',
+    contentTemplate: 'Due to high devotee turnout, please use alternative routes. {location} temporarily restricted.',
+    defaultChannels: ['display_board', 'app', 'sms'],
+    defaultPriority: 'urgent',
+    requiresGeoLocation: true,
+    approvalWorkflow: ['pr_manager', 'temple_admin'],
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+];
+
+export const dummySocialChannels: SocialChannel[] = [
+  {
+    id: 'sc-001',
+    platform: 'facebook',
+    accountName: 'Temple Official',
+    accountHandle: '@templeofficial',
+    isOfficial: true,
+    isActive: true,
+    managedBy: ['user-001', 'user-002'],
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'sc-002',
+    platform: 'twitter',
+    accountName: 'Temple Official',
+    accountHandle: '@templeofficial',
+    isOfficial: true,
+    isActive: true,
+    managedBy: ['user-001'],
+    createdBy: 'user-001',
+    createdAt: '2024-01-01T00:00:00Z',
+  },
+];
+
+export const dummySocialPosts: SocialPost[] = [
+  {
+    id: 'sp-001',
+    channelId: 'sc-001',
+    platform: 'facebook',
+    content: 'Join us for the special Maha Shivaratri celebrations. Darshan timings extended for devotees.',
+    mediaUrls: ['/images/festival-2024-1.jpg'],
+    status: 'published',
+    priority: 'normal',
+    isPinned: false,
+    moderationStatus: 'approved',
+    moderationBy: 'user-002',
+    moderationAt: '2024-03-08T10:00:00Z',
+    publishedAt: '2024-03-08T10:30:00Z',
+    engagementMetrics: {
+      likes: 1250,
+      shares: 340,
+      comments: 89,
+      views: 5600,
+    },
+    createdBy: 'user-001',
+    createdAt: '2024-03-08T09:00:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-08T10:00:00Z',
+    version: 1,
+    isLocked: true,
+  },
+];
+
+export const dummyContentCalendars: ContentCalendar[] = [
+  {
+    id: 'cc-001',
+    title: 'Weekly Festival Update',
+    content: 'This week\'s festival schedule and special programs...',
+    scheduledDate: '2024-03-20',
+    scheduledTime: '09:00',
+    channels: ['sc-001', 'sc-002'],
+    status: 'scheduled',
+    createdBy: 'user-001',
+    createdAt: '2024-03-15T10:00:00Z',
+  },
+];
+
+export const dummyCommunicationApprovals: CommunicationApproval[] = [
+  {
+    id: 'appr-001',
+    communicationType: 'announcement',
+    communicationId: 'ann-001',
+    currentLevel: 'pr_manager',
+    workflow: ['content_editor', 'pr_manager', 'temple_admin'],
+    status: 'approved',
+    requestedBy: 'user-001',
+    requestedAt: '2024-03-07T10:00:00Z',
+    reviewedBy: 'user-002',
+    reviewedAt: '2024-03-07T10:30:00Z',
+    approvedBy: 'user-002',
+    approvedAt: '2024-03-07T11:00:00Z',
+    isEmergencyOverride: false,
+    version: 1,
+  },
+];
+
+export const dummyUnauthorizedAttempts: UnauthorizedAttempt[] = [
+  {
+    id: 'ua-001',
+    userId: 'user-005',
+    action: 'Attempted to publish announcement without approval',
+    communicationType: 'announcement',
+    attemptedAt: '2024-03-10T14:00:00Z',
+    blocked: true,
+    reason: 'User does not have publishing rights',
+    ipAddress: '192.168.1.100',
+  },
+];
+
+export const dummyCommunicationMetrics: CommunicationMetrics = {
+  period: '2024-03-01 to 2024-03-31',
+  totalMessages: 1250,
+  byChannel: [
+    { channel: 'sms', count: 800, successRate: 98.5 },
+    { channel: 'whatsapp', count: 300, successRate: 97.2 },
+    { channel: 'app', count: 100, successRate: 99.0 },
+    { channel: 'display_board', count: 50, successRate: 100 },
+  ],
+  byStatus: [
+    { status: 'published', count: 1100 },
+    { status: 'draft', count: 100 },
+    { status: 'pending_approval', count: 50 },
+  ],
+  deliverySuccessRate: 98.2,
+  averageResponseTime: 15,
+  crisisAlertsCount: 5,
+  unauthorizedAttemptsCount: 3,
+};
+
+export const dummyCommunicationAuditLogs: CommunicationAuditLog[] = [
+  {
+    id: 'audit-001',
+    communicationType: 'announcement',
+    communicationId: 'ann-001',
+    action: 'published',
+    performedBy: 'user-002',
+    performedAt: '2024-03-07T11:30:00Z',
+    details: 'Published announcement for Maha Shivaratri',
+    ipAddress: '192.168.1.50',
+  },
+];
