@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RegistrationStatus from "./pages/RegistrationStatus";
 import Hub from "./pages/Hub";
+import UIKit from "./pages/UIKit";
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/hr/Employees";
 import Organization from "./pages/hr/Organization";
@@ -122,6 +123,9 @@ function AppRoutes() {
 
       {/* Hub - Post Login Module Selection */}
       <Route path="/hub" element={<ProtectedRoute><Hub /></ProtectedRoute>} />
+
+      {/* UI Kit */}
+      <Route path="/ui-kit" element={<ProtectedRoute><UIKit /></ProtectedRoute>} />
 
       {/* Dashboard within modules */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

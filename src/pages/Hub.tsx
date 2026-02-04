@@ -23,7 +23,8 @@ import {
   UserPlus,
   GitBranch,
   School,
-  BookOpen
+  BookOpen,
+  Palette
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,9 +211,17 @@ export default function Hub() {
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 mb-1">
             Welcome, {user?.name?.split(' ')[0]}
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mb-4">
             Access all modules of the temple Management System
           </p>
+          <Button
+            onClick={() => navigate('/ui-kit')}
+            variant="outline"
+            className="gap-2"
+          >
+            <Palette className="w-4 h-4" />
+            UI Kit
+          </Button>
         </div>
 
         {/* Module Grid - Compact Cards */}
