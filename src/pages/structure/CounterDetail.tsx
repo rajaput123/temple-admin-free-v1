@@ -19,7 +19,7 @@ export default function CounterDetail() {
   const [hallRooms] = useState<HallRoom[]>(dummyHallRooms);
   const [counters, setCounters] = useState<Counter[]>(dummyCounters);
   const [counterModalOpen, setCounterModalOpen] = useState(false);
-  
+
   const counter = counters.find(c => c.id === id);
   const hallRoom = hallRooms.find(h => h.id === counter?.hallRoomId);
 
@@ -32,9 +32,9 @@ export default function CounterDetail() {
 
   const toggleCounterStatus = () => {
     if (counter) {
-      setCounters(counters.map(c => 
-        c.id === counter.id 
-          ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' } 
+      setCounters(counters.map(c =>
+        c.id === counter.id
+          ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' }
           : c
       ));
     }
@@ -78,8 +78,8 @@ export default function CounterDetail() {
         <Card className="overflow-hidden">
           {counter.image && (
             <div className="w-full h-64 md:h-80 bg-muted overflow-hidden">
-              <img 
-                src={counter.image} 
+              <img
+                src={counter.image}
                 alt={counter.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {

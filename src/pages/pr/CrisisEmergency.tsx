@@ -9,6 +9,8 @@ import { Plus, Search, AlertTriangle, FileText, MapPin } from 'lucide-react';
 import { dummyCrisisAlerts, dummyCrisisTemplates } from '@/data/communications-data';
 import type { CrisisAlert, CrisisType } from '@/types/communications';
 import { usePermissions } from '@/hooks/usePermissions';
+import { CrisisAlertModal } from '@/components/pr/CrisisAlertModal';
+import { useState } from 'react';
 
 const crisisTypeColors: Record<CrisisType, string> = {
   crowd_control: 'bg-red-100 text-red-700',
@@ -21,9 +23,11 @@ const crisisTypeColors: Record<CrisisType, string> = {
 
 export default function CrisisEmergency() {
   const { checkWriteAccess } = usePermissions();
-  const [alerts] = useState<CrisisAlert[]>(dummyCrisisAlerts);
+  const [alerts, setAlerts] = useState<CrisisAlert[]>(dummyCrisisAlerts);
   const [templates] = useState(dummyCrisisTemplates);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState<CrisisAlert | null>(null);
 
   const canWrite = checkWriteAccess('communications');
 
@@ -153,7 +157,10 @@ export default function CrisisEmergency() {
         description="Manage crisis alerts, emergency broadcasts, and incident communication"
         actions={
           canWrite ? (
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={() => {
+              setSelectedAlert(null);
+              setIsModalOpen(true);
+            }}>
               <AlertTriangle className="h-4 w-4 mr-2" />
               New Crisis Alert
             </Button>
@@ -223,6 +230,28 @@ export default function CrisisEmergency() {
           <DataTable data={templates} columns={templateColumns} />
         </TabsContent>
       </Tabs>
+
+      <CrisisAlertModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        alert={selectedAlert}
+        onSave={(data) => {
+          if (selectedAlert) {
+            setAlerts(alerts.map(a => a.id === selectedAlert.id ? { ...a, ...data } as CrisisAlert : a));
+          } else {
+            const newAlert: CrisisAlert = {
+              id: `crisis-${Date.now()}`,
+              ...data,
+              status: 'published',
+              publishedAt: new Date().toISOString(),
+              createdBy: 'current-user',
+              createdAt: new Date().toISOString(),
+            } as CrisisAlert;
+            setAlerts([newAlert, ...alerts]);
+          }
+          setIsModalOpen(false);
+        }}
+      />
     </MainLayout>
   );
 }

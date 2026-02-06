@@ -1,6 +1,6 @@
 // PR & Communication Module Types
 
-export type CommunicationChannel = 
+export type CommunicationChannel =
   | 'display_board'
   | 'website'
   | 'app'
@@ -9,7 +9,16 @@ export type CommunicationChannel =
   | 'email'
   | 'social_media';
 
-export type CommunicationStatus = 
+export type AudienceType =
+  | 'all'
+  | 'public'
+  | 'devotees'
+  | 'donors'
+  | 'volunteers'
+  | 'members'
+  | 'staff';
+
+export type CommunicationStatus =
   | 'draft'
   | 'pending_review'
   | 'pending_approval'
@@ -18,26 +27,33 @@ export type CommunicationStatus =
   | 'expired'
   | 'cancelled';
 
-export type MessagePriority = 
+export type EventCategory =
+  | 'festival'
+  | 'seva'
+  | 'cultural'
+  | 'religious'
+  | 'other';
+
+export type MessagePriority =
   | 'normal'
   | 'high'
   | 'urgent'
   | 'crisis';
 
-export type DeliveryStatus = 
+export type DeliveryStatus =
   | 'pending'
   | 'sent'
   | 'delivered'
   | 'failed'
   | 'read';
 
-export type ApprovalLevel = 
+export type ApprovalLevel =
   | 'content_editor'
   | 'pr_manager'
   | 'temple_admin'
   | 'trustee';
 
-export type CrisisType = 
+export type CrisisType =
   | 'crowd_control'
   | 'delay'
   | 'incident'
@@ -45,7 +61,7 @@ export type CrisisType =
   | 'emergency'
   | 'other';
 
-export type SocialPlatform = 
+export type SocialPlatform =
   | 'facebook'
   | 'twitter'
   | 'instagram'
@@ -53,7 +69,7 @@ export type SocialPlatform =
   | 'whatsapp_business'
   | 'telegram';
 
-export type MediaQueryStatus = 
+export type MediaQueryStatus =
   | 'pending'
   | 'responded'
   | 'escalated'
@@ -70,7 +86,9 @@ export interface Announcement {
     content: string;
   }[];
   category: 'darshan' | 'seva' | 'festival' | 'maintenance' | 'closure' | 'general';
+  audienceType: AudienceType;
   channels: CommunicationChannel[];
+  mediaUrls?: string[];
   validityStart: string; // ISO date
   validityEnd: string; // ISO date
   status: CommunicationStatus;
@@ -86,6 +104,8 @@ export interface Announcement {
   isLocked: boolean; // Locked after publish
   autoExpire: boolean;
   expiryNotified: boolean;
+  views?: number;
+  clicks?: number;
 }
 
 export interface AnnouncementVersion {
@@ -95,6 +115,28 @@ export interface AnnouncementVersion {
   modifiedBy: string;
   modifiedAt: string;
   changeReason?: string;
+}
+
+export interface TempleEvent {
+  id: string;
+  title: string;
+  description: string;
+  category: EventCategory;
+  startTime: string; // ISO date
+  endTime: string; // ISO date
+  capacity: number;
+  rsvpEnabled: boolean;
+  rsvpCount: number;
+  location?: string;
+  status: CommunicationStatus;
+  priority: MessagePriority;
+  organizer?: string;
+  volunteersAssigned?: string[]; // Volunteer IDs
+  mediaUrls?: string[];
+  createdBy: string;
+  createdAt: string;
+  isRecurring?: boolean;
+  recurrenceRule?: string; // Metadata for recurrence
 }
 
 // Devotee Communication
@@ -136,6 +178,7 @@ export interface DevoteeMessage {
 export interface PressRelease {
   id: string;
   title: string;
+  summary?: string; // Short description
   content: string;
   embargoUntil?: string; // ISO date
   status: CommunicationStatus;
@@ -437,4 +480,40 @@ export interface DevoteeEngagementSummary {
     type: string;
     count: number;
   }[];
+}
+
+// Newsletter Management
+export interface Newsletter {
+  id: string;
+  subject: string;
+  content: string; // HTML content
+  status: 'draft' | 'scheduled' | 'sent' | 'archived';
+  audienceType: AudienceType;
+  scheduledAt?: string; // ISO date
+  sentAt?: string;
+  createdBy: string;
+  createdAt: string;
+  metrics?: {
+    totalSent: number;
+    openRate: number; // percentage
+    clickRate: number; // percentage
+    bounceRate: number; // percentage
+  };
+}
+
+// Feedback & Grievance
+export interface FeedbackTicket {
+  id: string;
+  userId: string;
+  userName?: string;
+  category: 'facilities' | 'prasadam' | 'rituals' | 'staff' | 'traceability' | 'other';
+  description: string;
+  status: 'open' | 'in_progress' | 'resolved';
+  priority: MessagePriority;
+  adminNotes?: string;
+  response?: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
 }

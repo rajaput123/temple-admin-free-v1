@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
@@ -22,13 +22,16 @@ import { useToast } from '@/hooks/use-toast';
 import { EmployeeDocuments } from '@/components/hr/EmployeeDocuments';
 import { EmployeeDocument } from '@/types/hr';
 import { useAuth } from '@/contexts/AuthContext';
+import { CustomFieldsRenderer } from '@/components/hr/CustomFieldsRenderer';
+import { addEmployee } from '@/lib/hr-employee-store';
+import type { Employee } from '@/types/erp';
 
 import { departments, designations, shifts, gradePays, leaveTypes } from '@/data/hr-dummy-data';
 
-const departmentOptions = departments.map(d => ({ value: d.id, label: d.name }));
-const designationOptions = designations.map(d => ({ value: d.id, label: d.name }));
-const shiftOptions = shifts.map(s => ({ value: s.id, label: s.name }));
-const gradePayOptions = gradePays.map(g => ({ value: g.id, label: g.name }));
+const baseDepartmentOptions = departments.map(d => ({ value: d.id, label: d.name }));
+const baseDesignationOptions = designations.map(d => ({ value: d.id, label: d.name }));
+const baseShiftOptions = shifts.map(s => ({ value: s.id, label: s.name }));
+const baseGradePayOptions = gradePays.map(g => ({ value: g.id, label: g.name }));
 
 export default function EmployeeOnboarding() {
   const navigate = useNavigate();
@@ -52,10 +55,12 @@ export default function EmployeeOnboarding() {
     lastName: '',
     email: '',
     phone: '',
+    mpin: '',
+    confirmMpin: '',
     department: '',
     designation: '',
-    reportingTo: '',
     employmentType: 'full_time',
+    jobDescription: '',
 
     // Joining
     joiningDate: '',
@@ -76,7 +81,6 @@ export default function EmployeeOnboarding() {
     // Shift
     shift: '',
     workLocation: 'Main Temple',
-    biometricId: '',
 
     // Leave
     leavePolicy: 'standard',
@@ -109,7 +113,45 @@ export default function EmployeeOnboarding() {
 
     // Documents
     documents: [] as { type: string; name: string; uploadedOn: string }[],
+
+    // Custom fields (dynamic)
+    customFieldValues: {} as Record<string, string>,
   });
+
+  // Dropdown options (support +Add)
+  const [departmentOptions, setDepartmentOptions] = useState(baseDepartmentOptions);
+  const [designationOptions, setDesignationOptions] = useState(baseDesignationOptions);
+  const [shiftOptions, setShiftOptions] = useState(baseShiftOptions);
+  const [gradePayOptions, setGradePayOptions] = useState(baseGradePayOptions);
+
+  const addOption = (
+    kind: 'department' | 'designation' | 'shift' | 'gradePay',
+    name: string
+  ) => {
+    const id = `${kind}-${Date.now()}`;
+    const option = { value: id, label: name };
+    if (kind === 'department') setDepartmentOptions((prev) => [...prev, option]);
+    if (kind === 'designation') setDesignationOptions((prev) => [...prev, option]);
+    if (kind === 'shift') setShiftOptions((prev) => [...prev, option]);
+    if (kind === 'gradePay') setGradePayOptions((prev) => [...prev, option]);
+    return option;
+  };
+
+  const promptAndAdd = (kind: 'department' | 'designation' | 'shift' | 'gradePay') => {
+    const labelMap: Record<typeof kind, string> = {
+      department: 'Department',
+      designation: 'Designation',
+      shift: 'Shift',
+      gradePay: 'Grade Pay',
+    };
+    const name = window.prompt(`Enter new ${labelMap[kind]} name:`);
+    if (!name || !name.trim()) return;
+    const option = addOption(kind, name.trim());
+    if (kind === 'department') updateForm('department', option.value);
+    if (kind === 'designation') updateForm('designation', option.value);
+    if (kind === 'shift') updateForm('shift', option.value);
+    if (kind === 'gradePay') updateForm('gradePay', option.value);
+  };
 
   const updateForm = (field: string, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -130,12 +172,65 @@ export default function EmployeeOnboarding() {
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
+
+      const deptLabel = departments.find(d => d.id === formData.department)?.name || '';
+      const desgLabel = designations.find(d => d.id === formData.designation)?.name || '';
+
+      const newEmployee: Employee = {
+        id: String(Date.now()),
+        employeeCode: formData.employeeCode,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        phone: formData.phone,
+        department: deptLabel,
+        designation: desgLabel,
+        status: 'active',
+        joinDate: formData.joiningDate || new Date().toISOString().split('T')[0],
+      };
+
+      // Persist (UI-only): store extra onboarding data on the record
+      addEmployee({
+        ...newEmployee,
+        mpin: formData.mpin,
+        customFieldValues: formData.customFieldValues,
+      } as any);
+
       toast({
         title: 'Employee Created',
         description: `${formData.firstName} ${formData.lastName} has been added to the system.`,
       });
       navigate('/hr/employees');
     }, 1000);
+  };
+
+  const handleDocumentUpload = (document: Omit<EmployeeDocument, 'id' | 'uploadedOn' | 'uploadedBy'>) => {
+    const newDocument: EmployeeDocument = {
+      ...document,
+      id: `doc-${Date.now()}`,
+      uploadedOn: new Date().toISOString(),
+      uploadedBy: user?.id || 'system',
+    };
+    setEmployeeDocuments(prev => [...prev, newDocument]);
+    toast({
+      title: 'Document uploaded',
+      description: 'Document has been uploaded successfully.',
+    });
+  };
+
+  const handleDocumentDelete = (documentId: string) => {
+    setEmployeeDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    toast({
+      title: 'Document deleted',
+      description: 'Document has been deleted successfully.',
+    });
+  };
+
+  const generateEmail = (type: 'welcome' | 'credentials' | 'contract') => {
+    setEmailTemplates(prev => ({ ...prev, [type]: true }));
+    toast({
+      title: `${type === 'welcome' ? 'Welcome' : type === 'credentials' ? 'Credentials' : 'Contract'} email sent`,
+      description: `Email has been sent to ${formData.email || 'employee'}.`,
+    });
   };
 
   const tabs = [
@@ -146,8 +241,17 @@ export default function EmployeeOnboarding() {
     { id: 'leave', label: 'Leave' },
     { id: 'salary', label: 'Salary' },
     { id: 'personal', label: 'Personal' },
+    { id: 'custom', label: 'Custom Fields' },
     { id: 'documents', label: 'Documents' },
   ];
+
+  const customFieldDefinitions = useMemo(() => {
+    const dept = departments.find(d => d.id === formData.department);
+    const desg = designations.find(d => d.id === formData.designation);
+    const defs = [...(dept?.customFields ?? []), ...(desg?.customFields ?? [])];
+    const byId = new Map(defs.map(d => [d.id, d]));
+    return Array.from(byId.values());
+  }, [formData.department, formData.designation]);
 
   return (
     <MainLayout>
@@ -222,11 +326,41 @@ export default function EmployeeOnboarding() {
                   />
                 </div>
                 <div className="form-field">
-                  <Label className="form-label">Phone</Label>
+                  <Label className="form-label">
+                    Phone <span className="form-required">*</span>
+                  </Label>
                   <Input
                     value={formData.phone}
                     onChange={(e) => updateForm('phone', e.target.value)}
                     placeholder="+91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="form-field">
+                  <Label className="form-label">
+                    MPIN <span className="form-required">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    value={formData.mpin}
+                    onChange={(e) => updateForm('mpin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="Enter 4-digit MPIN"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">4-digit numeric PIN for employee access</p>
+                </div>
+                <div className="form-field">
+                  <Label className="form-label">
+                    Confirm MPIN <span className="form-required">*</span>
+                  </Label>
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    value={formData.confirmMpin}
+                    onChange={(e) => updateForm('confirmMpin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="Re-enter MPIN"
                   />
                 </div>
               </div>
@@ -242,6 +376,7 @@ export default function EmployeeOnboarding() {
                     onChange={(value) => updateForm('department', value)}
                     placeholder="Select department"
                     addNewLabel="+ Add Department"
+                    onAddNew={() => promptAndAdd('department')}
                   />
                 </div>
                 <div className="form-field">
@@ -254,19 +389,12 @@ export default function EmployeeOnboarding() {
                     onChange={(value) => updateForm('designation', value)}
                     placeholder="Select designation"
                     addNewLabel="+ Add Designation"
+                    onAddNew={() => promptAndAdd('designation')}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
-                <div className="form-field">
-                  <Label className="form-label">Reporting To</Label>
-                  <Input
-                    value={formData.reportingTo}
-                    onChange={(e) => updateForm('reportingTo', e.target.value)}
-                    placeholder="Manager name"
-                  />
-                </div>
                 <div className="form-field">
                   <Label className="form-label">Employment Type</Label>
                   <Select
@@ -283,6 +411,15 @@ export default function EmployeeOnboarding() {
                       <SelectItem value="volunteer">Volunteer</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="form-field">
+                  <Label className="form-label">Job Description (JD)</Label>
+                  <Textarea
+                    value={formData.jobDescription}
+                    onChange={(e) => updateForm('jobDescription', e.target.value)}
+                    placeholder="Enter job description / responsibilities"
+                    rows={4}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -421,6 +558,7 @@ export default function EmployeeOnboarding() {
                     onChange={(value) => updateForm('shift', value)}
                     placeholder="Select shift"
                     addNewLabel="+ Add Shift"
+                    onAddNew={() => promptAndAdd('shift')}
                   />
                 </div>
                 <div className="form-field">
@@ -431,15 +569,6 @@ export default function EmployeeOnboarding() {
                     placeholder="Location"
                   />
                 </div>
-              </div>
-
-              <div className="form-field">
-                <Label className="form-label">Biometric ID</Label>
-                <Input
-                  value={formData.biometricId}
-                  onChange={(e) => updateForm('biometricId', e.target.value)}
-                  placeholder="Enter biometric ID"
-                />
               </div>
             </TabsContent>
 
@@ -501,6 +630,7 @@ export default function EmployeeOnboarding() {
                     onChange={(value) => updateForm('gradePay', value)}
                     placeholder="Select grade"
                     addNewLabel="+ Add Grade Pay"
+                    onAddNew={() => promptAndAdd('gradePay')}
                   />
                 </div>
                 <div className="form-field">
@@ -699,6 +829,28 @@ export default function EmployeeOnboarding() {
               </div>
             </TabsContent>
 
+            {/* Custom Fields Tab */}
+            <TabsContent value="custom" className="m-0 space-y-6">
+              <div className="space-y-2">
+                <h3 className="section-header">Custom Fields</h3>
+                <p className="text-xs text-muted-foreground">
+                  Additional fields based on selected Department/Designation
+                </p>
+              </div>
+
+              {customFieldDefinitions.length === 0 ? (
+                <div className="p-6 border border-dashed border-border rounded-lg text-center text-sm text-muted-foreground">
+                  No custom fields configured for the selected Department/Designation.
+                </div>
+              ) : (
+                <CustomFieldsRenderer
+                  definitions={customFieldDefinitions}
+                  values={formData.customFieldValues}
+                  onChange={(nextValues) => updateForm('customFieldValues', nextValues)}
+                />
+              )}
+            </TabsContent>
+
             {/* Documents Tab */}
             <TabsContent value="documents" className="m-0 space-y-6">
               <div className="space-y-4">
@@ -763,7 +915,10 @@ export default function EmployeeOnboarding() {
               <Save className="h-4 w-4 mr-2" />
               Save Draft
             </Button>
-            <Button onClick={handleCreate} disabled={isSaving || !formData.firstName || !formData.email}>
+            <Button
+              onClick={handleCreate}
+              disabled={isSaving}
+            >
               <UserPlus className="h-4 w-4 mr-2" />
               Create Employee
             </Button>

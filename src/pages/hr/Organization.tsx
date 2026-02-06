@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,12 +15,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { DepartmentModal } from '@/components/hr/DepartmentModal';
 import { DesignationModal } from '@/components/hr/DesignationModal';
 import { GradePayModal } from '@/components/hr/GradePayModal';
 import { ReportingHierarchy } from '@/components/hr/ReportingHierarchy';
+import { OrgTreeNode } from '@/components/hr/OrgTreeNode';
 
 import {
   departments as initialDepartments,
@@ -28,16 +29,27 @@ import {
   gradePays as initialGradePays,
   employees as allEmployees
 } from '@/data/hr-dummy-data';
+import { orgTree } from '@/data/hr-dummy-data';
 
 import type { Department, Designation, GradePay } from '@/types/hr';
-import { useMemo } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { usePermissions } from '@/hooks/usePermissions';
 
 export default function Organization() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { checkModuleAccess, user } = usePermissions();
   const [activeTab, setActiveTab] = useState('departments');
+
+  // Support deep-linking to a tab, e.g. /hr/organization?tab=orgtree
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    const allowedTabs = new Set(['departments', 'designations', 'gradepay', 'hierarchy', 'orgtree']);
+    if (tab && allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   // Admin-level access check
   if (!checkModuleAccess('organization')) {
@@ -132,6 +144,20 @@ export default function Organization() {
     }
   };
 
+  const handleAddNewDepartment = (name: string) => {
+    const newDept: Department = {
+      id: String(departments.length + 1),
+      name: name,
+      code: name.substring(0, 5).toUpperCase(),
+      employeeCount: 0,
+      status: 'active',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setDepartments(prev => [...prev, newDept]);
+    setEditingDept(newDept);
+    setDeptModalOpen(true);
+  };
+
   const handleDeleteDepartment = (id: string) => {
     setDepartments(prev => prev.filter(d => d.id !== id));
   };
@@ -164,6 +190,22 @@ export default function Organization() {
       } as GradePay;
       setGradePays(prev => [...prev, newGrade]);
     }
+  };
+
+  const handleAddNewGradePay = (name: string) => {
+    const newGrade: GradePay = {
+      id: String(gradePays.length + 1),
+      name: name,
+      code: name.substring(0, 5).toUpperCase(),
+      minSalary: 0,
+      maxSalary: 0,
+      allowances: 0,
+      level: 1,
+      status: 'active',
+    };
+    setGradePays(prev => [...prev, newGrade]);
+    setEditingGrade(newGrade);
+    setGradeModalOpen(true);
   };
 
   const handleDeleteGradePay = (id: string) => {
@@ -424,14 +466,24 @@ export default function Organization() {
 
         {/* Org Tree Tab */}
         <TabsContent value="orgtree" className="m-0">
-          <div className="p-6 border border-border rounded-lg bg-card text-center">
-            <p className="text-muted-foreground mb-4">
-              View the complete organizational hierarchy
-            </p>
-            <Button onClick={() => navigate('/hr/org-tree')}>
-              <Eye className="h-4 w-4 mr-2" />
-              View Org Tree
-            </Button>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Organization Tree</h3>
+                <p className="text-xs text-muted-foreground mt-1">Visual hierarchy of the organization structure</p>
+              </div>
+            </div>
+
+            <div className="border border-border rounded-lg bg-card">
+              <div className="p-4 border-b border-border text-sm text-muted-foreground">
+                Click nodes to expand/collapse
+              </div>
+              <div className="p-6 overflow-auto">
+                <div className="min-w-max">
+                  <OrgTreeNode node={orgTree} />
+                </div>
+              </div>
+            </div>
           </div>
         </TabsContent>
 
@@ -445,6 +497,7 @@ export default function Organization() {
         department={editingDept}
         departments={departments}
         onSave={handleSaveDepartment}
+        onAddDepartment={handleAddNewDepartment}
       />
 
       <DesignationModal
@@ -454,6 +507,8 @@ export default function Organization() {
         departments={departments}
         gradePays={gradePays}
         onSave={handleSaveDesignation}
+        onAddDepartment={handleAddNewDepartment}
+        onAddGradePay={handleAddNewGradePay}
       />
 
       <GradePayModal

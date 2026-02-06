@@ -20,9 +20,9 @@ export default function ZoneDetail() {
   const [childTemples] = useState<ChildTemple[]>(dummyChildTemples);
   const [zones, setZones] = useState<Zone[]>(dummyZones);
   const [zoneModalOpen, setZoneModalOpen] = useState(false);
-  
+
   const zone = zones.find(z => z.id === id);
-  
+
   const getTempleName = (id: string) => temples.find(t => t.id === id)?.name || 'Unknown';
   const getChildTempleName = (id: string) => childTemples.find(t => t.id === id)?.name || 'Unknown';
   const getAssociatedTempleName = (templeId: string, templeType: 'temple' | 'child_temple') => {
@@ -39,9 +39,9 @@ export default function ZoneDetail() {
 
   const toggleZoneStatus = () => {
     if (zone) {
-      setZones(zones.map(z => 
-        z.id === zone.id 
-          ? { ...z, status: z.status === 'active' ? 'inactive' : 'active' } 
+      setZones(zones.map(z =>
+        z.id === zone.id
+          ? { ...z, status: z.status === 'active' ? 'inactive' : 'active' }
           : z
       ));
     }
@@ -85,8 +85,8 @@ export default function ZoneDetail() {
         <Card className="overflow-hidden">
           {zone.image && (
             <div className="w-full h-64 md:h-80 bg-muted overflow-hidden">
-              <img 
-                src={zone.image} 
+              <img
+                src={zone.image}
                 alt={zone.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {

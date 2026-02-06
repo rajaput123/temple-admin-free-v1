@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,7 @@ interface DevoteeMessageModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   message?: DevoteeMessage | null;
-  onSave: (data: Partial<DevoteeMessage>) => void;
+  onSave: (data: Partial<DevoteeMessage>, sendNow?: boolean) => void;
 }
 
 const messageTypes: DevoteeMessage['messageType'][] = ['booking_confirmation', 'reminder', 'delay_alert', 'reschedule', 'general'];
@@ -66,12 +66,12 @@ export function DevoteeMessageModal({
     }
   }, [message, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, sendNow: boolean = false) => {
     e.preventDefault();
     onSave({
       ...formData,
       scheduledAt: formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : undefined,
-    });
+    }, sendNow);
   };
 
   const toggleChannel = (channel: CommunicationChannel) => {
@@ -84,12 +84,12 @@ export function DevoteeMessageModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{message ? 'Edit Message' : 'New Devotee Message'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-[700px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{message ? 'Edit Message' : 'New Devotee Message'}</SheetTitle>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="py-6">
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -98,7 +98,7 @@ export function DevoteeMessageModal({
               <TabsTrigger value="schedule">Schedule</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="basic" className="space-y-4 mt-4">
+            <TabsContent value="basic" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="messageType">Message Type *</Label>
                 <Select
@@ -159,15 +159,15 @@ export function DevoteeMessageModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="recipients" className="space-y-4 mt-4">
+            <TabsContent value="recipients" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="recipientIds">Recipient IDs (comma-separated)</Label>
                 <Input
                   id="recipientIds"
                   value={formData.recipientIds.join(', ')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    recipientIds: e.target.value.split(',').map(id => id.trim()).filter(id => id) 
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    recipientIds: e.target.value.split(',').map(id => id.trim()).filter(id => id)
                   })}
                   placeholder="Enter recipient IDs separated by commas"
                 />
@@ -177,7 +177,7 @@ export function DevoteeMessageModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="content" className="space-y-4 mt-4">
+            <TabsContent value="content" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
                 <Input
@@ -200,7 +200,7 @@ export function DevoteeMessageModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="schedule" className="space-y-4 mt-4">
+            <TabsContent value="schedule" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="scheduledAt">Schedule Send Time (optional)</Label>
                 <Input
@@ -216,25 +216,25 @@ export function DevoteeMessageModal({
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="mt-6">
+          <SheetFooter className="mt-8">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="outline">
+            <Button type="button" variant="outline" className="ml-2" onClick={(e) => handleSubmit(e, false)}>
               Save Draft
             </Button>
             {formData.scheduledAt ? (
-              <Button type="submit">
+              <Button type="button" className="ml-2" onClick={(e) => handleSubmit(e, false)}>
                 Schedule
               </Button>
             ) : (
-              <Button type="submit">
+              <Button type="button" className="ml-2" onClick={(e) => handleSubmit(e, true)}>
                 Send Now
               </Button>
             )}
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

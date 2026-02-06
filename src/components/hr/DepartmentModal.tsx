@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { CustomFieldsBuilder } from '@/components/hr/CustomFieldsBuilder';
+import type { CustomFieldDefinition } from '@/types/custom-fields';
 import type { Department } from '@/types/hr';
 
 interface DepartmentModalProps {
@@ -19,6 +21,7 @@ interface DepartmentModalProps {
   department?: Department | null;
   departments: Department[];
   onSave: (department: Partial<Department>) => void;
+  onAddDepartment?: (name: string) => void;
 }
 
 export function DepartmentModal({
@@ -27,6 +30,7 @@ export function DepartmentModal({
   department,
   departments,
   onSave,
+  onAddDepartment,
 }: DepartmentModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -34,6 +38,7 @@ export function DepartmentModal({
     headEmployee: '',
     parentDepartmentId: '',
     status: 'active' as 'active' | 'inactive',
+    customFields: [] as CustomFieldDefinition[],
   });
 
   useEffect(() => {
@@ -44,6 +49,7 @@ export function DepartmentModal({
         headEmployee: department.headEmployee || '',
         parentDepartmentId: department.parentDepartmentId || '',
         status: department.status,
+        customFields: (department as any).customFields || [],
       });
     } else {
       setFormData({
@@ -52,6 +58,7 @@ export function DepartmentModal({
         headEmployee: '',
         parentDepartmentId: '',
         status: 'active',
+        customFields: [],
       });
     }
   }, [department, open]);
@@ -60,8 +67,15 @@ export function DepartmentModal({
     onSave({
       ...formData,
       id: department?.id,
-    });
+      customFields: formData.customFields,
+    } as any);
     onOpenChange(false);
+  };
+
+  const handleAddNewDepartment = (name: string) => {
+    if (onAddDepartment) {
+      onAddDepartment(name);
+    }
   };
 
   // Build hierarchical options with path display
@@ -81,7 +95,7 @@ export function DepartmentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {department ? 'Edit Department' : 'Add Department'}
@@ -96,7 +110,7 @@ export function DepartmentModal({
             <Input
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Rituals"
+              placeholder="e.g., Operations"
             />
           </div>
 
@@ -107,7 +121,7 @@ export function DepartmentModal({
             <Input
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-              placeholder="e.g., RTL"
+              placeholder="e.g., OPS"
               maxLength={5}
             />
           </div>
@@ -128,6 +142,8 @@ export function DepartmentModal({
               value={formData.parentDepartmentId}
               onChange={(value) => setFormData({ ...formData, parentDepartmentId: value })}
               placeholder="Select parent (optional)"
+              addNewLabel="+ Add New Department"
+              onAddNew={handleAddNewDepartment}
             />
             <p className="text-xs text-muted-foreground mt-1">
               Create sub-departments by selecting a parent department
@@ -138,9 +154,16 @@ export function DepartmentModal({
             <Label className="form-label">Active Status</Label>
             <Switch
               checked={formData.status === 'active'}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 setFormData({ ...formData, status: checked ? 'active' : 'inactive' })
               }
+            />
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <CustomFieldsBuilder
+              value={formData.customFields}
+              onChange={(next) => setFormData({ ...formData, customFields: next })}
             />
           </div>
         </div>

@@ -16,11 +16,17 @@ import type {
   ExpenseAuditLog
 } from '@/types/hr';
 import type { Employee } from '@/types/erp';
+import type { CustomFieldDefinition } from '@/types/custom-fields';
+
+const cf = (overrides: Partial<CustomFieldDefinition> & Pick<CustomFieldDefinition, 'id' | 'label' | 'type'>): CustomFieldDefinition => ({
+  options: [],
+  ...overrides,
+});
 
 export const departments: Department[] = [
-  { id: '1', name: 'Administration', code: 'ADMIN', headEmployee: 'Lakshmi Devi', employeeCount: 5, status: 'active', createdAt: '2020-01-01' },
-  { id: '2', name: 'Rituals', code: 'RTL', headEmployee: 'Ramesh Kumar', employeeCount: 12, status: 'active', createdAt: '2020-01-01' },
-  { id: '3', name: 'Finance', code: 'FIN', headEmployee: 'Priya Patel', employeeCount: 4, status: 'active', createdAt: '2020-01-01' },
+  { id: '1', name: 'Administration', code: 'ADMIN', headEmployee: 'Lakshmi Devi', employeeCount: 5, status: 'active', createdAt: '2020-01-01', customFields: [cf({ id: 'dept-joinChannel', label: 'Join Channel', type: 'dropdown', options: ['Referral', 'Walk-in', 'Portal'] })] },
+  { id: '2', name: 'Rituals', code: 'RTL', headEmployee: 'Ramesh Kumar', employeeCount: 12, status: 'active', createdAt: '2020-01-01', customFields: [cf({ id: 'dept-skill', label: 'Primary Skill', type: 'dropdown', options: ['Archana', 'Abhishekam', 'Homa'] })] },
+  { id: '3', name: 'Finance', code: 'FIN', headEmployee: 'Priya Patel', employeeCount: 4, status: 'active', createdAt: '2020-01-01', customFields: [cf({ id: 'dept-tally', label: 'Tally Experience', type: 'dropdown', options: ['Yes', 'No'] })] },
   { id: '4', name: 'Kitchen', code: 'KIT', headEmployee: 'Meena Singh', employeeCount: 15, status: 'active', createdAt: '2020-01-01' },
   { id: '5', name: 'Security', code: 'SEC', headEmployee: 'Venkat Rao', employeeCount: 20, status: 'active', createdAt: '2020-01-01' },
   { id: '6', name: 'Maintenance', code: 'MNT', headEmployee: 'Gopal Reddy', employeeCount: 8, status: 'active', createdAt: '2020-01-01' },
@@ -29,7 +35,7 @@ export const departments: Department[] = [
 ];
 
 export const designations: Designation[] = [
-  { id: '1', name: 'Head Priest', department: 'Rituals', grade: 'Grade A', level: 1, status: 'active' },
+  { id: '1', name: 'Head Priest', department: 'Rituals', grade: 'Grade A', level: 1, status: 'active', customFields: [cf({ id: 'desg-veda', label: 'Veda Training', type: 'dropdown', options: ['Rig', 'Yajur', 'Sama', 'Atharva'] })] },
   { id: '2', name: 'Senior Priest', department: 'Rituals', grade: 'Grade B', level: 2, status: 'active' },
   { id: '3', name: 'Assistant Priest', department: 'Rituals', grade: 'Grade C', level: 3, status: 'active' },
   { id: '4', name: 'HR Manager', department: 'Administration', grade: 'Grade A', level: 1, status: 'active' },
@@ -44,7 +50,7 @@ export const designations: Designation[] = [
 ];
 
 export const gradePays: GradePay[] = [
-  { id: '1', name: 'Grade A - Executive', code: 'GA', minSalary: 60000, maxSalary: 100000, allowances: 20000, level: 1, status: 'active' },
+  { id: '1', name: 'Grade A - Executive', code: 'GA', minSalary: 60000, maxSalary: 100000, allowances: 20000, level: 1, status: 'active', customFields: [cf({ id: 'gp-band', label: 'Pay Band', type: 'dropdown', options: ['Band-1', 'Band-2', 'Band-3'] })] },
   { id: '2', name: 'Grade B - Senior', code: 'GB', minSalary: 40000, maxSalary: 60000, allowances: 15000, level: 2, status: 'active' },
   { id: '3', name: 'Grade C - Mid-Level', code: 'GC', minSalary: 25000, maxSalary: 40000, allowances: 10000, level: 3, status: 'active' },
   { id: '4', name: 'Grade D - Entry Level', code: 'GD', minSalary: 15000, maxSalary: 25000, allowances: 5000, level: 4, status: 'active' },

@@ -25,7 +25,7 @@ export default function Sacred() {
   const [sacredModalOpen, setSacredModalOpen] = useState(false);
   const [editingSacred, setEditingSacred] = useState<Sacred | null>(null);
   const [selectedSacred, setSelectedSacred] = useState<Sacred | null>(null);
-  
+
   if (!checkModuleAccess('structure')) {
     return (
       <MainLayout>
@@ -58,18 +58,18 @@ export default function Sacred() {
 
   const sacredColumns = [
     { key: 'name', label: 'Sacred Name', sortable: true },
-    { 
-      key: 'sacredType', 
-      label: 'Type', 
+    {
+      key: 'sacredType',
+      label: 'Type',
       render: (value: unknown) => (
         <StatusBadge variant={value === 'deity' ? 'primary' : 'warning'}>
           {sacredTypeLabels[value as keyof typeof sacredTypeLabels]}
         </StatusBadge>
       )
     },
-    { 
-      key: 'associatedTempleId', 
-      label: 'Associated Temple', 
+    {
+      key: 'associatedTempleId',
+      label: 'Associated Temple',
       render: (_: unknown, row: Sacred) => getAssociatedTempleName(row.associatedTempleId, row.associatedTempleType)
     },
     {
@@ -104,7 +104,7 @@ export default function Sacred() {
             <TabsTrigger value="festivals">Festivals</TabsTrigger>
             <TabsTrigger value="schedule">Abhishekam Schedule</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="list">
             <DataTable
               data={sacreds}
@@ -126,7 +126,7 @@ export default function Sacred() {
               )}
             />
           </TabsContent>
-          
+
           <TabsContent value="festivals">
             <Card>
               <CardContent className="p-6">
@@ -156,7 +156,7 @@ export default function Sacred() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="schedule">
             <Card>
               <CardContent className="p-6">

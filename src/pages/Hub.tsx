@@ -52,6 +52,12 @@ const modules = [
     href: '/rituals',
   },
   {
+    id: 'projects',
+    name: 'Projects & Initiatives',
+    icon: FolderKanban,
+    href: '/projects',
+  },
+  {
     id: 'hr',
     name: 'People / HR',
     icon: Users,
@@ -123,12 +129,7 @@ const modules = [
     icon: Calendar,
     href: '/events',
   },
-  {
-    id: 'projects',
-    name: 'Projects & Initiatives',
-    icon: FolderKanban,
-    href: '/projects',
-  },
+
   {
     id: 'settings',
     name: 'Settings',

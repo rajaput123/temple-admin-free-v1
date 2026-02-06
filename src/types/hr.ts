@@ -1,4 +1,5 @@
 // HR Module Types
+import type { CustomFieldDefinition } from '@/types/custom-fields';
 
 export interface Department {
   id: string;
@@ -10,6 +11,7 @@ export interface Department {
   status: 'active' | 'inactive';
   createdAt: string;
   path?: string; // Full path like "HR > Recruitment > Executive Hiring"
+  customFields?: CustomFieldDefinition[];
 }
 
 export interface Designation {
@@ -19,6 +21,7 @@ export interface Designation {
   grade?: string;
   level: number;
   status: 'active' | 'inactive';
+  customFields?: CustomFieldDefinition[];
 }
 
 export interface GradePay {
@@ -30,6 +33,7 @@ export interface GradePay {
   allowances: number;
   level: number;
   status: 'active' | 'inactive';
+  customFields?: CustomFieldDefinition[];
 }
 
 export interface Shift {
@@ -257,7 +261,6 @@ export interface EmployeeOnboarding {
   // Shift & Attendance Tab
   shift: string;
   workLocation: string;
-  biometricId?: string;
   
   // Leave Tab
   leavePolicy: string;

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { Announcement, CommunicationChannel } from '@/types/communications';
+import { CustomFields, type CustomField } from '@/components/pr/CustomFields';
+import { DropdownWithAdd } from '@/components/pr/DropdownWithAdd';
+import type { Announcement, CommunicationChannel, AudienceType } from '@/types/communications';
+import { X } from 'lucide-react';
 
 interface AnnouncementModalProps {
   open: boolean;
@@ -22,9 +25,10 @@ interface AnnouncementModalProps {
   onSave: (data: Partial<Announcement>) => void;
 }
 
-const categories = ['darshan', 'seva', 'festival', 'maintenance', 'closure', 'general'];
-const channels: CommunicationChannel[] = ['display_board', 'website', 'app', 'sms', 'whatsapp', 'email', 'social_media'];
-const priorities = ['normal', 'high', 'urgent', 'crisis'];
+const defaultCategories = ['darshan', 'seva', 'festival', 'maintenance', 'closure', 'general'];
+const defaultChannels: CommunicationChannel[] = ['display_board', 'website', 'app', 'sms', 'whatsapp', 'email', 'social_media'];
+const defaultPriorities = ['normal', 'high', 'urgent', 'crisis'];
+const defaultAudienceTypes: AudienceType[] = ['all', 'public', 'devotees', 'donors', 'volunteers', 'members', 'staff'];
 
 export function AnnouncementModal({
   open,
@@ -32,11 +36,19 @@ export function AnnouncementModal({
   announcement,
   onSave,
 }: AnnouncementModalProps) {
+  const [categories, setCategories] = useState<string[]>(defaultCategories);
+  const [priorities, setPriorities] = useState<string[]>(defaultPriorities);
+  const [audienceTypes, setAudienceTypes] = useState<string[]>(defaultAudienceTypes);
+  const [channels, setChannels] = useState<CommunicationChannel[]>(defaultChannels);
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     category: 'general' as Announcement['category'],
+    audienceType: 'all' as AudienceType,
     channels: [] as CommunicationChannel[],
+    mediaUrls: [] as string[],
     validityStart: '',
     validityEnd: '',
     priority: 'normal' as Announcement['priority'],
@@ -44,31 +56,65 @@ export function AnnouncementModal({
     contentTranslations: [] as { language: string; title: string; content: string }[],
   });
 
+  const handleAddCategory = (newCategory: string) => {
+    const category = newCategory.toLowerCase().trim();
+    if (category && !categories.includes(category)) {
+      setCategories([...categories, category]);
+    }
+  };
+
+  const handleAddPriority = (newPriority: string) => {
+    const priority = newPriority.toLowerCase().trim();
+    if (priority && !priorities.includes(priority)) {
+      setPriorities([...priorities, priority]);
+    }
+  };
+
+  const handleAddAudience = (newAudience: string) => {
+    const audience = newAudience.toLowerCase().trim();
+    if (audience && !audienceTypes.includes(audience)) {
+      setAudienceTypes([...audienceTypes, audience]);
+    }
+  };
+
+  const handleAddChannel = (newChannel: string) => {
+    const channel = newChannel.toLowerCase().trim().replace(' ', '_') as CommunicationChannel;
+    if (channel && !channels.includes(channel)) {
+      setChannels([...channels, channel]);
+    }
+  };
+
   useEffect(() => {
     if (announcement) {
       setFormData({
         title: announcement.title,
         content: announcement.content,
         category: announcement.category,
+        audienceType: announcement.audienceType || 'all',
         channels: announcement.channels,
+        mediaUrls: announcement.mediaUrls || [],
         validityStart: announcement.validityStart ? new Date(announcement.validityStart).toISOString().slice(0, 16) : '',
         validityEnd: announcement.validityEnd ? new Date(announcement.validityEnd).toISOString().slice(0, 16) : '',
         priority: announcement.priority,
         autoExpire: announcement.autoExpire,
         contentTranslations: announcement.contentTranslations || [],
       });
+      setCustomFields((announcement as any).customFields || []);
     } else {
       setFormData({
         title: '',
         content: '',
         category: 'general',
+        audienceType: 'all',
         channels: [],
+        mediaUrls: [],
         validityStart: '',
         validityEnd: '',
         priority: 'normal',
         autoExpire: true,
         contentTranslations: [],
       });
+      setCustomFields([]);
     }
   }, [announcement, open]);
 
@@ -78,6 +124,7 @@ export function AnnouncementModal({
       ...formData,
       validityStart: formData.validityStart ? new Date(formData.validityStart).toISOString() : new Date().toISOString(),
       validityEnd: formData.validityEnd ? new Date(formData.validityEnd).toISOString() : new Date().toISOString(),
+      customFields: customFields as any,
     });
   };
 
@@ -114,12 +161,12 @@ export function AnnouncementModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{announcement ? 'Edit Announcement' : 'New Announcement'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="sm:max-w-[800px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{announcement ? 'Edit Announcement' : 'New Announcement'}</SheetTitle>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="py-6">
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic</TabsTrigger>
@@ -128,7 +175,7 @@ export function AnnouncementModal({
               <TabsTrigger value="translations">Translations</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="basic" className="space-y-4 mt-4">
+            <TabsContent value="basic" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Title *</Label>
                 <Input
@@ -142,45 +189,40 @@ export function AnnouncementModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
-                  <Select
+                  <DropdownWithAdd
                     value={formData.category}
+                    options={categories}
                     onValueChange={(value) => setFormData({ ...formData, category: value as Announcement['category'] })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onAdd={handleAddCategory}
+                    placeholder="Select category"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="audience">Target Audience</Label>
+                  <DropdownWithAdd
+                    value={formData.audienceType}
+                    options={audienceTypes}
+                    onValueChange={(value) => setFormData({ ...formData, audienceType: value as AudienceType })}
+                    onAdd={handleAddAudience}
+                    placeholder="Select audience"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select
+                  <DropdownWithAdd
                     value={formData.priority}
+                    options={priorities}
                     onValueChange={(value) => setFormData({ ...formData, priority: value as Announcement['priority'] })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {priorities.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p.charAt(0).toUpperCase() + p.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onAdd={handleAddPriority}
+                    placeholder="Select priority"
+                  />
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="content" className="space-y-4 mt-4">
+            <TabsContent value="content" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label htmlFor="content">Content *</Label>
                 <Textarea
@@ -191,9 +233,40 @@ export function AnnouncementModal({
                   rows={6}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>Media URLs (Images/Videos)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter image or video URL and press Enter"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = e.currentTarget.value;
+                        if (val) {
+                          setFormData({ ...formData, mediaUrls: [...formData.mediaUrls, val] });
+                          e.currentTarget.value = '';
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <div className="space-y-2 mt-2">
+                  {formData.mediaUrls.map((url, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 border rounded bg-gray-50 text-sm">
+                      <span className="flex-1 truncate">{url}</span>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                        setFormData({ ...formData, mediaUrls: formData.mediaUrls.filter((_, i) => i !== idx) });
+                      }}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </TabsContent>
 
-            <TabsContent value="channels" className="space-y-4 mt-4">
+            <TabsContent value="channels" className="space-y-4 mt-6">
               <div className="space-y-2">
                 <Label>Channels</Label>
                 <div className="grid grid-cols-2 gap-2">
@@ -249,7 +322,7 @@ export function AnnouncementModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="translations" className="space-y-4 mt-4">
+            <TabsContent value="translations" className="space-y-4 mt-6">
               <div className="flex items-center justify-between">
                 <Label>Multilingual Content</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addTranslation}>
@@ -299,19 +372,26 @@ export function AnnouncementModal({
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="mt-6">
+          <div className="mt-8 pt-6 border-t">
+            <CustomFields
+              initialCustomFields={customFields}
+              onCustomFieldsChange={setCustomFields}
+            />
+          </div>
+
+          <SheetFooter className="mt-8">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="outline">
+            <Button type="submit" variant="outline" className="ml-2">
               Save Draft
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="ml-2">
               Submit for Review
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

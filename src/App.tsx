@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +12,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RegistrationStatus from "./pages/RegistrationStatus";
 import Hub from "./pages/Hub";
-import UIKit from "./pages/UIKit";
 import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/hr/Employees";
 import Organization from "./pages/hr/Organization";
@@ -81,22 +81,27 @@ import AssetAudit from "./pages/assets/AssetAudit";
 import CVEvidence from "./pages/assets/CVEvidence";
 import AssetDisposal from "./pages/assets/AssetDisposal";
 import AssetReports from "./pages/assets/AssetReports";
-import ProjectMaster from "./pages/projects/ProjectMaster";
-import ProjectPlanning from "./pages/projects/ProjectPlanning";
-import ProjectBudget from "./pages/projects/ProjectBudget";
-import ProjectVendors from "./pages/projects/ProjectVendors";
-import ProjectExecution from "./pages/projects/ProjectExecution";
-import ProjectCompliance from "./pages/projects/ProjectCompliance";
-import ProjectPayments from "./pages/projects/ProjectPayments";
-import ProjectChanges from "./pages/projects/ProjectChanges";
+import ProjectsOverview from "./pages/projects/ProjectsOverview";
+import ProjectRegistry from "./pages/projects/ProjectRegistry";
+import ProjectDetails from "./pages/projects/ProjectDetails";
+import ProjectEditor from "./pages/projects/ProjectEditor";
+import MyActivities from "./pages/projects/MyActivities";
 import ProjectReports from "./pages/projects/ProjectReports";
 import Announcements from "./pages/pr/Announcements";
-import DevoteeCommunication from "./pages/pr/DevoteeCommunication";
-import MediaPress from "./pages/pr/MediaPress";
-import CrisisEmergency from "./pages/pr/CrisisEmergency";
+import Events from "./pages/pr/Events";
+import EventEditor from "./pages/pr/EventEditor";
+import Notifications from "./pages/pr/Notifications";
+import BroadcastCenter from "./pages/pr/BroadcastCenter";
+import BroadcastCampaignBuilder from "./pages/pr/BroadcastCampaignBuilder";
+import Feedback from "./pages/pr/Feedback";
 import SocialDigital from "./pages/pr/SocialDigital";
-import Approvals from "./pages/pr/Approvals";
-import Reports from "./pages/pr/Reports";
+import KnowledgeDashboard from "./pages/knowledge/KnowledgeDashboard";
+import CategoriesManagement from "./pages/knowledge/CategoriesManagement";
+import KnowledgeDocuments from "./pages/knowledge/KnowledgeDocuments";
+import UploadDocument from "./pages/knowledge/UploadDocument";
+import ApprovalManagement from "./pages/knowledge/ApprovalManagement";
+import BetaConversationTesting from "./pages/knowledge/BetaConversationTesting";
+import DevoteeChat from "./pages/knowledge/DevoteeChat";
 import NotFound from "./pages/NotFound";
 import { PlatformConfigProvider } from "./contexts/PlatformConfigContext";
 
@@ -123,9 +128,6 @@ function AppRoutes() {
 
       {/* Hub - Post Login Module Selection */}
       <Route path="/hub" element={<ProtectedRoute><Hub /></ProtectedRoute>} />
-
-      {/* UI Kit */}
-      <Route path="/ui-kit" element={<ProtectedRoute><UIKit /></ProtectedRoute>} />
 
       {/* Dashboard within modules */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -227,25 +229,25 @@ function AppRoutes() {
       <Route path="/assets/reports" element={<ProtectedRoute><AssetReports /></ProtectedRoute>} />
       
       {/* Projects routes */}
-      <Route path="/projects" element={<ProtectedRoute><Navigate to="/projects/master" replace /></ProtectedRoute>} />
-      <Route path="/projects/master" element={<ProtectedRoute><ProjectMaster /></ProtectedRoute>} />
-      <Route path="/projects/planning" element={<ProtectedRoute><ProjectPlanning /></ProtectedRoute>} />
-      <Route path="/projects/budget" element={<ProtectedRoute><ProjectBudget /></ProtectedRoute>} />
-      <Route path="/projects/vendors" element={<ProtectedRoute><ProjectVendors /></ProtectedRoute>} />
-      <Route path="/projects/execution" element={<ProtectedRoute><ProjectExecution /></ProtectedRoute>} />
-      <Route path="/projects/compliance" element={<ProtectedRoute><ProjectCompliance /></ProtectedRoute>} />
-      <Route path="/projects/payments" element={<ProtectedRoute><ProjectPayments /></ProtectedRoute>} />
-      <Route path="/projects/changes" element={<ProtectedRoute><ProjectChanges /></ProtectedRoute>} />
+      <Route path="/projects" element={<ProtectedRoute><Navigate to="/projects/overview" replace /></ProtectedRoute>} />
+      <Route path="/projects/overview" element={<ProtectedRoute><ProjectsOverview /></ProtectedRoute>} />
+      <Route path="/projects/registry" element={<ProtectedRoute><ProjectRegistry /></ProtectedRoute>} />
+      <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetails /></ProtectedRoute>} />
+      <Route path="/projects/:id/edit" element={<ProtectedRoute><ProjectEditor /></ProtectedRoute>} />
+      <Route path="/projects/new" element={<ProtectedRoute><ProjectEditor /></ProtectedRoute>} />
+      <Route path="/projects/my-activities" element={<ProtectedRoute><MyActivities /></ProtectedRoute>} />
       <Route path="/projects/reports" element={<ProtectedRoute><ProjectReports /></ProtectedRoute>} />
       
       {/* PR & Communication routes */}
       <Route path="/pr/announcements" element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
-      <Route path="/pr/devotees" element={<ProtectedRoute><DevoteeCommunication /></ProtectedRoute>} />
-      <Route path="/pr/media" element={<ProtectedRoute><MediaPress /></ProtectedRoute>} />
-      <Route path="/pr/crisis" element={<ProtectedRoute><CrisisEmergency /></ProtectedRoute>} />
+      <Route path="/pr/calendar" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+      <Route path="/pr/calendar/new" element={<ProtectedRoute><EventEditor /></ProtectedRoute>} />
+      <Route path="/pr/calendar/:id" element={<ProtectedRoute><EventEditor /></ProtectedRoute>} />
+      <Route path="/pr/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+      <Route path="/pr/broadcast" element={<ProtectedRoute><BroadcastCenter /></ProtectedRoute>} />
+      <Route path="/pr/broadcast/new" element={<ProtectedRoute><BroadcastCampaignBuilder /></ProtectedRoute>} />
+      <Route path="/pr/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/pr/digital" element={<ProtectedRoute><SocialDigital /></ProtectedRoute>} />
-      <Route path="/pr/approvals" element={<ProtectedRoute><Approvals /></ProtectedRoute>} />
-      <Route path="/pr/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
       <Route path="/pr/*" element={<ProtectedRoute><Navigate to="/pr/announcements" replace /></ProtectedRoute>} />
       <Route path="/crm/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/tasks/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -256,7 +258,16 @@ function AppRoutes() {
       <Route path="/events/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/branch/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/institution/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/knowledge/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      {/* Knowledge routes */}
+      <Route path="/knowledge" element={<ProtectedRoute><Navigate to="/knowledge/dashboard" replace /></ProtectedRoute>} />
+      <Route path="/knowledge/dashboard" element={<ProtectedRoute><KnowledgeDashboard /></ProtectedRoute>} />
+      <Route path="/knowledge/categories" element={<ProtectedRoute><CategoriesManagement /></ProtectedRoute>} />
+      <Route path="/knowledge/documents" element={<ProtectedRoute><KnowledgeDocuments /></ProtectedRoute>} />
+      <Route path="/knowledge/upload" element={<ProtectedRoute><UploadDocument /></ProtectedRoute>} />
+      <Route path="/knowledge/approvals" element={<ProtectedRoute><ApprovalManagement /></ProtectedRoute>} />
+      <Route path="/knowledge/beta-testing" element={<ProtectedRoute><BetaConversationTesting /></ProtectedRoute>} />
+      <Route path="/knowledge/chat" element={<ProtectedRoute><DevoteeChat /></ProtectedRoute>} />
+      <Route path="/knowledge/*" element={<ProtectedRoute><Navigate to="/knowledge/dashboard" replace /></ProtectedRoute>} />
       <Route path="/settings/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />

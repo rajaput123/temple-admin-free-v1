@@ -9,6 +9,7 @@ import { Plus, Search, Share2, Calendar, Facebook, Twitter, Instagram } from 'lu
 import { dummySocialChannels, dummySocialPosts, dummyContentCalendars } from '@/data/communications-data';
 import type { SocialPost, SocialPlatform } from '@/types/communications';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useToast } from '@/components/ui/use-toast';
 
 const platformIcons: Record<SocialPlatform, any> = {
   facebook: Facebook,
@@ -21,6 +22,7 @@ const platformIcons: Record<SocialPlatform, any> = {
 
 export default function SocialDigital() {
   const { checkWriteAccess } = usePermissions();
+  const { toast } = useToast();
   const [channels] = useState(dummySocialChannels);
   const [posts] = useState<SocialPost[]>(dummySocialPosts);
   const [calendars] = useState(dummyContentCalendars);
@@ -224,7 +226,7 @@ export default function SocialDigital() {
         description="Manage official social media accounts, content publishing, and moderation"
         actions={
           canWrite ? (
-            <Button>
+            <Button onClick={() => toast({ title: 'Coming Soon', description: 'Post creation feature will be available soon.' })}>
               <Plus className="h-4 w-4 mr-2" />
               New Post
             </Button>
@@ -251,7 +253,7 @@ export default function SocialDigital() {
         <TabsContent value="channels">
           <div className="mb-4">
             {canWrite && (
-              <Button>
+              <Button onClick={() => toast({ title: 'Coming Soon', description: 'Channel management feature will be available soon.' })}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Channel
               </Button>
@@ -307,7 +309,7 @@ export default function SocialDigital() {
         <TabsContent value="calendar">
           <div className="mb-4">
             {canWrite && (
-              <Button>
+              <Button onClick={() => toast({ title: 'Coming Soon', description: 'Content scheduling feature will be available soon.' })}>
                 <Plus className="h-4 w-4 mr-2" />
                 Schedule Content
               </Button>

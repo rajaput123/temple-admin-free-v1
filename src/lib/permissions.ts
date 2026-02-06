@@ -1,7 +1,7 @@
 import { UserRole } from '@/types/erp';
 import { Employee } from '@/types/erp';
 
-export type Permission = 
+export type Permission =
   | 'employees:read'
   | 'employees:write'
   | 'employees:delete'
@@ -199,6 +199,13 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'project_compliance:read', 'project_compliance:write', 'project_compliance:certify',
     'project_payments:read', 'project_payments:write', 'project_payments:approve',
     'change_requests:read', 'change_requests:write', 'change_requests:approve',
+    'communications:read', 'communications:write', 'communications:delete',
+    'announcements:read', 'announcements:write', 'announcements:publish',
+    'devotee_messages:read', 'devotee_messages:write', 'devotee_messages:send',
+    'media:read', 'media:write', 'media:approve',
+    'crisis:read', 'crisis:write', 'crisis:override',
+    'social:read', 'social:write', 'social:publish', 'social:moderate',
+    'approvals:read', 'approvals:approve', 'approvals:reject',
   ],
   temple_administrator: [
     'employees:read', 'employees:write', 'employees:delete',
@@ -588,12 +595,12 @@ export function hasPermission(role: UserRole, permission: Permission): boolean {
   return permissions.includes(permission);
 }
 
-export function canAccessModule(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'payroll' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'reports' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests'): boolean {
+export function canAccessModule(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'payroll' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'reports' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests' | 'communications'): boolean {
   const readPermission = `${module}:read` as Permission;
   return hasPermission(role, readPermission);
 }
 
-export function canWrite(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests'): boolean {
+export function canWrite(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests' | 'communications'): boolean {
   const writePermission = `${module}:write` as Permission;
   return hasPermission(role, writePermission);
 }
@@ -602,14 +609,14 @@ export function filterEmployeesByRole(employees: Employee[], userRole: UserRole,
   if (userRole === 'super_admin' || userRole === 'temple_administrator' || userRole === 'hr_manager') {
     return employees;
   }
-  
+
   if (userRole === 'department_head' && userDepartmentId) {
     return employees.filter(emp => emp.department === userDepartmentId);
   }
-  
+
   if (userRole === 'finance' || userRole === 'audit') {
     return employees; // View only, but can see all
   }
-  
+
   return employees;
 }

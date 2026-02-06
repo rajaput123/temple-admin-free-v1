@@ -12,8 +12,6 @@ import {
   UtensilsCrossed,
   Landmark,
   Megaphone,
-  FolderKanban,
-  Ticket,
   UserCheck,
   ChevronLeft,
   Settings,
@@ -28,6 +26,8 @@ import {
   Wrench,
   CalendarDays,
   Star,
+  Mail,
+  HandHeart,
   UserCog,
   ClipboardList,
   FileInput,
@@ -38,6 +38,7 @@ import {
   Play,
   Truck,
   FileBox,
+  Radio,
   ScrollText,
   Bell,
   CalendarRange,
@@ -70,9 +71,11 @@ import {
   GitBranch,
   School,
   BookOpen,
-  AlertTriangle,
-  Share2,
-  CheckCircle2
+  Activity,
+  FileCheck,
+  TrendingUp,
+  FolderSearch,
+  Share2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -95,6 +98,18 @@ interface ModuleConfig {
 
 const moduleConfigs: ModuleConfig[] = [
   {
+    id: 'projects',
+    name: 'Projects & Initiatives',
+    icon: FolderSearch,
+    basePath: '/projects',
+    subModules: [
+      { name: 'Dashboard', href: '/projects', icon: LayoutGrid },
+      { name: 'Project Registry', href: '/projects/registry', icon: ClipboardList },
+      { name: 'My Activities', href: '/projects/my-tasks', icon: ListTodo },
+      { name: 'Project Reports', href: '/projects/reports', icon: BarChart3 },
+    ],
+  },
+  {
     id: 'structure',
     name: 'Temple Structure',
     icon: Building2,
@@ -115,13 +130,12 @@ const moduleConfigs: ModuleConfig[] = [
     icon: Megaphone,
     basePath: '/pr',
     subModules: [
-      { name: 'Announcements & Notices', href: '/pr/announcements', icon: Bell },
-      { name: 'Devotee Communication', href: '/pr/devotees', icon: Users },
-      { name: 'Media & Press', href: '/pr/media', icon: FileText },
-      { name: 'Crisis & Emergency', href: '/pr/crisis', icon: AlertTriangle },
+      { name: 'Announcements', href: '/pr/announcements', icon: Bell },
+      { name: 'Events Calendar', href: '/pr/calendar', icon: CalendarDays },
+      { name: 'Notifications', href: '/pr/notifications', icon: Bell },
+      { name: 'Broadcast Center', href: '/pr/broadcast', icon: Radio },
+      { name: 'Feedback & Grievance', href: '/pr/feedback', icon: MessageSquare },
       { name: 'Social & Digital', href: '/pr/digital', icon: Share2 },
-      { name: 'Approval & Governance', href: '/pr/approvals', icon: CheckCircle2 },
-      { name: 'Reports & Audit', href: '/pr/reports', icon: BarChart3 },
     ],
   },
   {
@@ -192,11 +206,11 @@ const moduleConfigs: ModuleConfig[] = [
     icon: BookOpen,
     basePath: '/knowledge',
     subModules: [
-      { name: 'Knowledge Base', href: '/knowledge/base', icon: BookOpen },
-      { name: 'Documents', href: '/knowledge/documents', icon: FileText },
-      { name: 'Articles', href: '/knowledge/articles', icon: FileText },
-      { name: 'Categories', href: '/knowledge/categories', icon: FolderOpen },
-      { name: 'Search', href: '/knowledge/search', icon: Search },
+      { name: 'Dashboard', href: '/knowledge/dashboard', icon: LayoutGrid },
+      { name: 'Categories Management', href: '/knowledge/categories', icon: FolderOpen },
+      { name: 'Knowledge Management', href: '/knowledge/documents', icon: FileText },
+      { name: 'Approval Management', href: '/knowledge/approvals', icon: ClipboardCheck },
+      { name: 'Beta Conversation Testing', href: '/knowledge/beta-testing', icon: MessageSquare },
     ],
   },
   {
@@ -316,23 +330,7 @@ const moduleConfigs: ModuleConfig[] = [
       { name: 'Reports', href: '/assets/reports', icon: BarChart3 },
     ],
   },
-  {
-    id: 'projects',
-    name: 'Projects & Initiatives',
-    icon: FolderKanban,
-    basePath: '/projects',
-    subModules: [
-      { name: 'Project Master', href: '/projects/master', icon: FolderOpen },
-      { name: 'Planning & Milestones', href: '/projects/planning', icon: ListTodo },
-      { name: 'Budget & Funding', href: '/projects/budget', icon: Wallet },
-      { name: 'Vendors & Contractors', href: '/projects/vendors', icon: UserCog },
-      { name: 'Execution & Progress', href: '/projects/execution', icon: Play },
-      { name: 'Quality & Compliance', href: '/projects/compliance', icon: ClipboardCheck },
-      { name: 'Payments & Bills', href: '/projects/payments', icon: Receipt },
-      { name: 'Change Requests', href: '/projects/changes', icon: FileText },
-      { name: 'Reports & Audit', href: '/projects/reports', icon: BarChart3 },
-    ],
-  },
+
   {
     id: 'settings',
     name: 'Settings',
@@ -367,9 +365,14 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     return moduleConfig?.enabled !== false; // Show if enabled or not specified
   });
 
+  // Helper to check if a module is active based on path
+  const isModuleActive = (module: ModuleConfig) => {
+    return location.pathname === module.basePath || location.pathname.startsWith(module.basePath + '/');
+  };
+
   // Find current module based on path - try visibleModules first, then fallback to all modules
-  const currentModule = visibleModules.find(m => location.pathname.startsWith(m.basePath)) 
-    || moduleConfigs.find(m => location.pathname.startsWith(m.basePath));
+  const currentModule = visibleModules.find(isModuleActive)
+    || moduleConfigs.find(isModuleActive);
   const ModuleIcon = currentModule?.icon || LayoutGrid;
 
   // Close search when clicking outside
@@ -521,7 +524,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 >
                   <SubIcon className={cn("h-4 w-4 shrink-0 transition-colors flex-shrink-0", isActive ? "text-primary" : "text-gray-900")} />
                   {!collapsed && (
-                    <span 
+                    <span
                       className="truncate min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
                       style={{ maxWidth: 'calc(240px - 80px)' }}
                     >
@@ -554,7 +557,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full ring-2 ring-sidebar" />
           </div>
           {!collapsed && (
-            <span 
+            <span
               className="truncate min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
               style={{ maxWidth: 'calc(240px - 80px)' }}
             >
@@ -572,7 +575,7 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
         >
           <HelpCircle className="h-4 w-4 shrink-0 text-gray-900 flex-shrink-0" />
           {!collapsed && (
-            <span 
+            <span
               className="truncate min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
               style={{ maxWidth: 'calc(240px - 80px)' }}
             >

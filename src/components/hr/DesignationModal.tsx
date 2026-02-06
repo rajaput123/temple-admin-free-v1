@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { CustomFieldsBuilder } from '@/components/hr/CustomFieldsBuilder';
+import type { CustomFieldDefinition } from '@/types/custom-fields';
 import type { Designation, Department, GradePay } from '@/types/hr';
 
 interface DesignationModalProps {
@@ -20,6 +22,8 @@ interface DesignationModalProps {
   departments: Department[];
   gradePays: GradePay[];
   onSave: (designation: Partial<Designation>) => void;
+  onAddDepartment?: (name: string) => void;
+  onAddGradePay?: (name: string) => void;
 }
 
 export function DesignationModal({
@@ -29,6 +33,8 @@ export function DesignationModal({
   departments,
   gradePays,
   onSave,
+  onAddDepartment,
+  onAddGradePay,
 }: DesignationModalProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -36,6 +42,7 @@ export function DesignationModal({
     grade: '',
     level: 1,
     status: 'active' as 'active' | 'inactive',
+    customFields: [] as CustomFieldDefinition[],
   });
 
   useEffect(() => {
@@ -46,6 +53,7 @@ export function DesignationModal({
         grade: designation.grade || '',
         level: designation.level,
         status: designation.status,
+        customFields: (designation as any).customFields || [],
       });
     } else {
       setFormData({
@@ -54,6 +62,7 @@ export function DesignationModal({
         grade: '',
         level: 1,
         status: 'active',
+        customFields: [],
       });
     }
   }, [designation, open]);
@@ -62,8 +71,21 @@ export function DesignationModal({
     onSave({
       ...formData,
       id: designation?.id,
-    });
+      customFields: formData.customFields,
+    } as any);
     onOpenChange(false);
+  };
+
+  const handleAddNewDepartment = (name: string) => {
+    if (onAddDepartment) {
+      onAddDepartment(name);
+    }
+  };
+
+  const handleAddNewGradePay = (name: string) => {
+    if (onAddGradePay) {
+      onAddGradePay(name);
+    }
   };
 
   const departmentOptions = departments.map(d => ({ value: d.name, label: d.name }));
@@ -71,7 +93,7 @@ export function DesignationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {designation ? 'Edit Designation' : 'Add Designation'}
@@ -86,7 +108,7 @@ export function DesignationModal({
             <Input
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Head Priest"
+              placeholder="e.g., Team Lead"
             />
           </div>
 
@@ -97,6 +119,8 @@ export function DesignationModal({
               value={formData.department}
               onChange={(value) => setFormData({ ...formData, department: value })}
               placeholder="Select department"
+              addNewLabel="+ Add New Department"
+              onAddNew={handleAddNewDepartment}
             />
           </div>
 
@@ -107,6 +131,8 @@ export function DesignationModal({
               value={formData.grade}
               onChange={(value) => setFormData({ ...formData, grade: value })}
               placeholder="Select grade"
+              addNewLabel="+ Add New Grade Pay"
+              onAddNew={handleAddNewGradePay}
             />
           </div>
 
@@ -125,9 +151,16 @@ export function DesignationModal({
             <Label className="form-label">Active Status</Label>
             <Switch
               checked={formData.status === 'active'}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 setFormData({ ...formData, status: checked ? 'active' : 'inactive' })
               }
+            />
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <CustomFieldsBuilder
+              value={formData.customFields}
+              onChange={(next) => setFormData({ ...formData, customFields: next })}
             />
           </div>
         </div>

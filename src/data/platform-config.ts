@@ -56,8 +56,8 @@ export const mockPlatformConfig: PlatformConfig = {
     kitchen: { enabled: false },
     prasad: { enabled: false },
     assets: { enabled: false },
-    pr: { enabled: false },
-    projects: { enabled: false },
+    pr: { enabled: true },
+    projects: { enabled: true },
     crm: { enabled: false },
   },
 };

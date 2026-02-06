@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { CustomFieldsBuilder } from '@/components/hr/CustomFieldsBuilder';
+import type { CustomFieldDefinition } from '@/types/custom-fields';
 import type { GradePay } from '@/types/hr';
 
 interface GradePayModalProps {
@@ -33,6 +35,7 @@ export function GradePayModal({
     allowances: 0,
     level: 1,
     status: 'active' as 'active' | 'inactive',
+    customFields: [] as CustomFieldDefinition[],
   });
 
   useEffect(() => {
@@ -45,6 +48,7 @@ export function GradePayModal({
         allowances: gradePay.allowances,
         level: gradePay.level,
         status: gradePay.status,
+        customFields: (gradePay as any).customFields || [],
       });
     } else {
       setFormData({
@@ -55,6 +59,7 @@ export function GradePayModal({
         allowances: 0,
         level: 1,
         status: 'active',
+        customFields: [],
       });
     }
   }, [gradePay, open]);
@@ -63,7 +68,8 @@ export function GradePayModal({
     onSave({
       ...formData,
       id: gradePay?.id,
-    });
+      customFields: formData.customFields,
+    } as any);
     onOpenChange(false);
   };
 
@@ -77,7 +83,7 @@ export function GradePayModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {gradePay ? 'Edit Grade Pay' : 'Add Grade Pay'}
@@ -161,6 +167,13 @@ export function GradePayModal({
               onCheckedChange={(checked) => 
                 setFormData({ ...formData, status: checked ? 'active' : 'inactive' })
               }
+            />
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <CustomFieldsBuilder
+              value={formData.customFields}
+              onChange={(next) => setFormData({ ...formData, customFields: next })}
             />
           </div>
         </div>

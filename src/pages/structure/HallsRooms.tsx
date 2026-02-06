@@ -21,7 +21,7 @@ export default function HallsRooms() {
   const [hallRooms, setHallRooms] = useState<HallRoom[]>(dummyHallRooms);
   const [hallRoomModalOpen, setHallRoomModalOpen] = useState(false);
   const [editingHallRoom, setEditingHallRoom] = useState<HallRoom | null>(null);
-  
+
   if (!checkModuleAccess('structure')) {
     return (
       <MainLayout>
@@ -48,20 +48,20 @@ export default function HallsRooms() {
 
   const hallRoomColumns = [
     { key: 'name', label: 'Name', sortable: true },
-    { 
-      key: 'type', 
-      label: 'Type', 
+    {
+      key: 'type',
+      label: 'Type',
       render: (value: unknown) => hallRoomTypeLabels[value as keyof typeof hallRoomTypeLabels]
     },
-    { 
-      key: 'zoneId', 
-      label: 'Zone / Area', 
+    {
+      key: 'zoneId',
+      label: 'Zone / Area',
       render: (value: unknown) => getZoneName(value as string)
     },
     { key: 'capacity', label: 'Capacity', sortable: true },
-    { 
-      key: 'isBookable', 
-      label: 'Bookable', 
+    {
+      key: 'isBookable',
+      label: 'Bookable',
       render: (_: unknown, row: HallRoom) => row.isBookable ? 'Yes' : 'No'
     },
     {
@@ -97,7 +97,7 @@ export default function HallsRooms() {
             <TabsTrigger value="rates">Rates</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="list">
             <DataTable
               data={hallRooms}
@@ -116,7 +116,7 @@ export default function HallsRooms() {
               )}
             />
           </TabsContent>
-          
+
           <TabsContent value="booking">
             <Card>
               <CardContent className="p-6">
@@ -154,7 +154,7 @@ export default function HallsRooms() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="rates">
             <Card>
               <CardContent className="p-6">
@@ -192,7 +192,7 @@ export default function HallsRooms() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="maintenance">
             <Card>
               <CardContent className="p-6">
@@ -210,11 +210,10 @@ export default function HallsRooms() {
                               <Calendar className="h-4 w-4 text-muted-foreground" />
                               <span>{schedule.date}</span>
                               <span className="text-muted-foreground">- {schedule.type}</span>
-                              <span className={`px-2 py-0.5 rounded text-xs ${
-                                schedule.status === 'completed' ? 'bg-success/10 text-success' :
-                                schedule.status === 'in_progress' ? 'bg-warning/10 text-warning' :
-                                'bg-muted'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded text-xs ${schedule.status === 'completed' ? 'bg-success/10 text-success' :
+                                  schedule.status === 'in_progress' ? 'bg-warning/10 text-warning' :
+                                    'bg-muted'
+                                }`}>
                                 {schedule.status}
                               </span>
                             </div>

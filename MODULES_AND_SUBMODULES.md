@@ -39,7 +39,10 @@
 | | Maintenance Log | `/assets/maintenance` | Record and track asset maintenance activities and schedules |
 | **PR & Communication** | Announcements | `/pr/announcements` | Create and manage temple announcements and public communications |
 | | Events Calendar | `/pr/calendar` | Manage public events calendar and event schedules |
-| **Projects** | Active Projects | `/projects/active` | Track ongoing temple projects, construction, and development work |
+| | Newsletter | `/pr/newsletter` | Creation and scheduling of newsletters and subscriber management |
+| | Media & Press | `/pr/media` | Management of media assets, press releases and external communications |
+| | Feedback & Grievance | `/pr/feedback` | Grievance ticket management and feedback resolution system |
+| | Volunteer Comms | `/pr/volunteers` | Broadcast alerts and communication with volunteers || **Projects** | Active Projects | `/projects/active` | Track ongoing temple projects, construction, and development work |
 | | Tasks | `/projects/tasks` | Manage project tasks, assignments, and task tracking |
 | **CRM** | Devotees | `/crm/devotees` | Manage devotee database, contact information, and devotee relationships |
 | | Donations | `/crm/donations` | Track donations, donor information, and donation history |

@@ -34,7 +34,9 @@ import { EmployeeBulkImport } from '@/components/hr/EmployeeBulkImport';
 import { usePermissions } from '@/hooks/usePermissions';
 import { filterEmployeesByRole } from '@/lib/permissions';
 import type { Employee } from '@/types/erp';
-import { employees as initialEmployees, departments as orgDepartments, designations as orgDesignations } from '@/data/hr-dummy-data';
+import { departments as orgDepartments, designations as orgDesignations } from '@/data/hr-dummy-data';
+import { useToast } from '@/hooks/use-toast';
+import { getEmployees as getStoredEmployees, setEmployees as setStoredEmployees } from '@/lib/hr-employee-store';
 
 // Convert organization data to select options
 const departments = orgDepartments.map(d => ({ value: d.name.toLowerCase(), label: d.name }));
@@ -42,8 +44,9 @@ const designations = orgDesignations.map(d => ({ value: d.name.toLowerCase().rep
 
 export default function Employees() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { user, checkWriteAccess, isReadOnly } = usePermissions();
-  const [employees, setEmployees] = useState(initialEmployees);
+  const [employees, setEmployees] = useState(getStoredEmployees());
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
@@ -161,7 +164,22 @@ export default function Employees() {
   ];
 
   const handleAddNew = () => {
-    navigate('/hr/employees/new');
+    if (!checkWriteAccess('employees')) {
+      toast({
+        title: 'Access denied',
+        description: 'You do not have permission to add employees.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      navigate('/hr/employees/new');
+    } catch (error) {
+      console.error('Error navigating to employee onboarding:', error);
+      // Fallback: try direct window location if navigate fails
+      window.location.href = '/hr/employees/new';
+    }
   };
 
   const handleEdit = (employee: Employee) => {
@@ -177,16 +195,20 @@ export default function Employees() {
   };
 
   const handleDelete = (id: string) => {
-    setEmployees(employees.filter(e => e.id !== id));
+    const next = employees.filter(e => e.id !== id);
+    setEmployees(next);
+    setStoredEmployees(next);
   };
 
   const handleSubmit = () => {
     if (editingEmployee) {
-      setEmployees(employees.map(e =>
+      const next = employees.map(e =>
         e.id === editingEmployee.id
           ? { ...e, ...formData, department: departmentOptions.find(d => d.value === formData.department)?.label || formData.department, designation: designationOptions.find(d => d.value === formData.designation)?.label || formData.designation }
           : e
-      ));
+      );
+      setEmployees(next);
+      setStoredEmployees(next);
     } else {
       const newEmployee: Employee = {
         id: String(employees.length + 1),
@@ -196,7 +218,9 @@ export default function Employees() {
         status: 'active',
         joinDate: new Date().toISOString().split('T')[0],
       };
-      setEmployees([...employees, newEmployee]);
+      const next = [...employees, newEmployee];
+      setEmployees(next);
+      setStoredEmployees(next);
     }
     setIsFormOpen(false);
   };
@@ -224,7 +248,9 @@ export default function Employees() {
       status: 'active' as const,
       joinDate: new Date().toISOString().split('T')[0],
     }));
-    setEmployees([...employees, ...newEmployees]);
+    const next = [...employees, ...newEmployees];
+    setEmployees(next);
+    setStoredEmployees(next);
   };
 
   const handleExport = () => {
@@ -304,7 +330,11 @@ export default function Employees() {
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
-                <Button size="sm" onClick={handleAddNew} disabled={!checkWriteAccess('employees')}>
+                <Button
+                  size="sm"
+                  onClick={handleAddNew}
+                  title={!checkWriteAccess('employees') ? 'You do not have permission to add employees' : 'Add new employee'}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Employee
                 </Button>

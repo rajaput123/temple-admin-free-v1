@@ -19,7 +19,7 @@ export default function HallRoomDetail() {
   const [zones] = useState<Zone[]>(dummyZones);
   const [hallRooms, setHallRooms] = useState<HallRoom[]>(dummyHallRooms);
   const [hallRoomModalOpen, setHallRoomModalOpen] = useState(false);
-  
+
   const hallRoom = hallRooms.find(h => h.id === id);
   const zone = zones.find(z => z.id === hallRoom?.zoneId);
 
@@ -32,9 +32,9 @@ export default function HallRoomDetail() {
 
   const toggleHallRoomStatus = () => {
     if (hallRoom) {
-      setHallRooms(hallRooms.map(h => 
-        h.id === hallRoom.id 
-          ? { ...h, status: h.status === 'active' ? 'inactive' : 'active' } 
+      setHallRooms(hallRooms.map(h =>
+        h.id === hallRoom.id
+          ? { ...h, status: h.status === 'active' ? 'inactive' : 'active' }
           : h
       ));
     }
@@ -78,8 +78,8 @@ export default function HallRoomDetail() {
         <Card className="overflow-hidden">
           {hallRoom.image && (
             <div className="w-full h-64 md:h-80 bg-muted overflow-hidden">
-              <img 
-                src={hallRoom.image} 
+              <img
+                src={hallRoom.image}
                 alt={hallRoom.name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -264,11 +264,10 @@ export default function HallRoomDetail() {
                               <p className="font-semibold text-sm">{format(new Date(schedule.date), 'MMMM dd, yyyy')}</p>
                               <p className="text-sm text-muted-foreground">Type: {schedule.type}</p>
                             </div>
-                            <span className={`px-2 py-1 rounded-md text-xs ${
-                              schedule.status === 'completed' ? 'bg-success/10 text-success' :
-                              schedule.status === 'in_progress' ? 'bg-warning/10 text-warning' :
-                              'bg-muted text-muted-foreground'
-                            }`}>
+                            <span className={`px-2 py-1 rounded-md text-xs ${schedule.status === 'completed' ? 'bg-success/10 text-success' :
+                                schedule.status === 'in_progress' ? 'bg-warning/10 text-warning' :
+                                  'bg-muted text-muted-foreground'
+                              }`}>
                               {schedule.status.replace('_', ' ')}
                             </span>
                           </div>

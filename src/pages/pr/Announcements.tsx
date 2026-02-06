@@ -4,11 +4,22 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, LayoutGrid, LayoutList, Send } from 'lucide-react';
 import { dummyAnnouncements } from '@/data/communications-data';
 import type { Announcement, CommunicationStatus } from '@/types/communications';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 import { AnnouncementModal } from '@/components/pr/AnnouncementModal';
+import { canUserPerformAction, getNextStatus } from '@/lib/communication-approval-workflow';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const statusColors: Record<CommunicationStatus, string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -22,15 +33,17 @@ const statusColors: Record<CommunicationStatus, string> = {
 
 export default function Announcements() {
   const { checkWriteAccess } = usePermissions();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [announcements, setAnnouncements] = useState<Announcement[]>(dummyAnnouncements);
-  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<CommunicationStatus | 'all'>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
   const canWrite = checkWriteAccess('communications');
 
-  const handleCreate = () => {
+  const handleCreateNew = () => {
     setEditingAnnouncement(null);
     setIsModalOpen(true);
   };
@@ -40,43 +53,72 @@ export default function Announcements() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setAnnouncements(announcements.filter(a => a.id !== id));
-  };
-
-  const handleSave = (data: Partial<Announcement>) => {
+  const handleSaveAnnouncement = (data: Partial<Announcement>) => {
     if (editingAnnouncement) {
-      setAnnouncements(announcements.map(a => a.id === editingAnnouncement.id ? { ...a, ...data } as Announcement : a));
+      setAnnouncements(announcements.map(ann => 
+        ann.id === editingAnnouncement.id ? { ...ann, ...data } as Announcement : ann
+      ));
+      toast({ title: 'Announcement Updated', description: 'The announcement has been updated successfully.' });
     } else {
       const newAnnouncement: Announcement = {
         id: `ann-${Date.now()}`,
-        title: data.title || '',
-        content: data.content || '',
-        category: data.category || 'general',
-        channels: data.channels || [],
-        validityStart: data.validityStart || new Date().toISOString(),
-        validityEnd: data.validityEnd || new Date().toISOString(),
         status: 'draft',
-        priority: data.priority || 'normal',
-        createdBy: 'current-user',
+        createdBy: user?.id || 'current-user',
         createdAt: new Date().toISOString(),
+        channels: [],
+        priority: 'normal',
+        audienceType: 'all',
+        autoExpire: true,
         version: 1,
         isLocked: false,
-        autoExpire: data.autoExpire || false,
         expiryNotified: false,
         ...data,
-      };
+      } as Announcement;
       setAnnouncements([...announcements, newAnnouncement]);
+      toast({ title: 'Announcement Created', description: 'A new announcement has been created.' });
     }
     setIsModalOpen(false);
     setEditingAnnouncement(null);
   };
 
+  const handleDelete = (announcement: Announcement) => {
+    if (announcement.status === 'draft') {
+      setAnnouncements(announcements.filter(ann => ann.id !== announcement.id));
+      toast({ title: 'Announcement Deleted', description: 'The announcement has been deleted.' });
+    }
+  };
+
+  const handlePublish = (announcement: Announcement) => {
+    if (!user) return;
+    
+    if (canUserPerformAction(user.role, announcement.status, 'publish')) {
+      const nextStatus = getNextStatus(announcement.status, 'publish', user.role);
+      if (nextStatus) {
+        setAnnouncements(announcements.map(ann =>
+          ann.id === announcement.id
+            ? {
+                ...ann,
+                status: nextStatus,
+                publishedBy: user.id,
+                publishedAt: new Date().toISOString(),
+                isLocked: true,
+              } as Announcement
+            : ann
+        ));
+        toast({ title: 'Announcement Published', description: 'The announcement has been published successfully.' });
+      }
+    } else {
+      toast({
+        title: 'Cannot Publish',
+        description: 'You do not have permission to publish this announcement or it is not in the correct status.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const filteredAnnouncements = announcements.filter((ann) => {
-    const matchesSearch = ann.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ann.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || ann.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   });
 
   const columns = [
@@ -92,35 +134,24 @@ export default function Announcements() {
       ),
     },
     {
-      key: 'channels',
-      label: 'Channels',
+      key: 'priority',
+      label: 'Priority',
+      sortable: true,
       render: (value: unknown, row: Announcement) => (
-        <div className="flex flex-wrap gap-1">
-          {row.channels.slice(0, 3).map((ch: string) => (
-            <Badge key={ch} variant="outline" className="text-xs">
-              {ch.replace('_', ' ')}
-            </Badge>
-          ))}
-          {row.channels.length > 3 && (
-            <Badge variant="outline" className="text-xs">+{row.channels.length - 3}</Badge>
-          )}
-        </div>
+        <Badge variant={row.priority === 'urgent' ? 'destructive' : 'outline'}>
+          {row.priority}
+        </Badge>
       ),
     },
     {
-      key: 'validityStart',
-      label: 'Validity',
+      key: 'audienceType',
+      label: 'Audience',
       sortable: true,
-      render: (value: unknown, row: Announcement) => {
-        const start = new Date(row.validityStart);
-        const end = new Date(row.validityEnd);
-        return (
-          <div className="text-sm">
-            <div>{start.toLocaleDateString()}</div>
-            <div className="text-xs text-gray-500">to {end.toLocaleDateString()}</div>
-          </div>
-        );
-      },
+      render: (value: unknown, row: Announcement) => (
+        <Badge variant="secondary" className="capitalize">
+          {row.audienceType || 'All'}
+        </Badge>
+      ),
     },
     {
       key: 'status',
@@ -133,13 +164,30 @@ export default function Announcements() {
       ),
     },
     {
-      key: 'priority',
-      label: 'Priority',
+      key: 'validityStart',
+      label: 'Published',
       sortable: true,
       render: (value: unknown, row: Announcement) => (
-        <Badge variant={row.priority === 'urgent' ? 'destructive' : 'outline'}>
-          {row.priority}
-        </Badge>
+        <span className="text-sm text-gray-600">
+          {row.validityStart ? new Date(row.validityStart).toLocaleDateString() : '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'validityEnd',
+      label: 'Expires',
+      sortable: true,
+      render: (value: unknown, row: Announcement) => (
+        <span className="text-sm text-gray-600">
+          {row.validityEnd ? new Date(row.validityEnd).toLocaleDateString() : 'Never'}
+        </span>
+      ),
+    },
+    {
+      key: 'views',
+      label: 'Views',
+      render: (value: unknown, row: Announcement) => (
+        <span className="text-sm text-gray-600">{row.views || 0}</span>
       ),
     },
   ];
@@ -150,102 +198,141 @@ export default function Announcements() {
         title="Announcements & Notices"
         description="Manage temple announcements, notices, and public communications"
         actions={
-          canWrite ? (
-            <Button onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Announcement
-            </Button>
-          ) : undefined
+          <div className="flex items-center gap-2">
+            <div className="bg-gray-100 p-1 rounded-lg flex items-center border">
+              <Button
+                variant={viewMode === 'table' ? 'outline' : 'ghost'}
+                size="sm"
+                className={`px-2 h-7 ${viewMode === 'table' ? 'shadow-sm bg-white' : ''}`}
+                onClick={() => setViewMode('table')}
+              >
+                <LayoutList className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'cards' ? 'outline' : 'ghost'}
+                size="sm"
+                className={`px-2 h-7 ${viewMode === 'cards' ? 'shadow-sm bg-white' : ''}`}
+                onClick={() => setViewMode('cards')}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
+            {canWrite && (
+              <Button onClick={handleCreateNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Announcement
+              </Button>
+            )}
+          </div>
         }
       />
 
-      <div className="space-y-4">
-        {/* Filters */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search announcements..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm"
-            />
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+              {['all', 'draft', 'published', 'expired'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setStatusFilter(tab as any)}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${statusFilter === tab
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as CommunicationStatus | 'all')}
-            className="px-4 py-2 border rounded-lg text-sm"
-          >
-            <option value="all">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="pending_review">Pending Review</option>
-            <option value="pending_approval">Pending Approval</option>
-            <option value="approved">Approved</option>
-            <option value="published">Published</option>
-            <option value="expired">Expired</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-sm text-gray-600">Total</div>
-            <div className="text-2xl font-bold mt-1">{announcements.length}</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-sm text-gray-600">Published</div>
-            <div className="text-2xl font-bold mt-1 text-green-600">
-              {announcements.filter(a => a.status === 'published').length}
+          {viewMode === 'table' ? (
+            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+              <DataTable
+                data={filteredAnnouncements}
+                columns={columns}
+                actions={(row) => (
+                  <div className="flex items-center gap-2">
+                    {canWrite && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        {row.status === 'approved' && user && canUserPerformAction(user.role, row.status, 'publish') && (
+                          <Button variant="ghost" size="sm" onClick={() => handlePublish(row)} className="text-green-600">
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {row.status === 'draft' && (
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(row)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              />
             </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-sm text-gray-600">Pending</div>
-            <div className="text-2xl font-bold mt-1 text-yellow-600">
-              {announcements.filter(a => a.status === 'pending_review' || a.status === 'pending_approval').length}
-            </div>
-          </div>
-          <div className="bg-white p-4 rounded-lg border">
-            <div className="text-sm text-gray-600">Expired</div>
-            <div className="text-2xl font-bold mt-1 text-red-600">
-              {announcements.filter(a => a.status === 'expired').length}
-            </div>
-          </div>
-        </div>
-
-        {/* Data Table */}
-        <DataTable 
-          data={filteredAnnouncements} 
-          columns={columns}
-          actions={(row) => (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Eye className="h-4 w-4" />
-              </Button>
-              {canWrite && (
-                <>
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  {row.status === 'draft' && (
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(row.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </>
-              )}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAnnouncements.map((announcement) => (
+                <Card key={announcement.id} className="group hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <Badge variant="outline" className="capitalize">{announcement.category}</Badge>
+                      <Badge className={statusColors[announcement.status]}>
+                        {announcement.status}
+                      </Badge>
+                    </div>
+                    <CardTitle className="mt-2 line-clamp-2 leading-tight">
+                      {announcement.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-3">
+                    <p className="text-sm text-gray-500 line-clamp-3 mb-4">
+                      {announcement.content}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">{announcement.views || 0}</span> views
+                      </div>
+                      <div>
+                        Expires: {new Date(announcement.validityEnd).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-3 border-t flex justify-end gap-2">
+                    {canWrite && (
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
+                          Edit
+                        </Button>
+                        {announcement.status === 'approved' && user && canUserPerformAction(user.role, announcement.status, 'publish') && (
+                          <Button variant="default" size="sm" onClick={() => handlePublish(announcement)} className="bg-green-600 hover:bg-green-700">
+                            Publish
+                          </Button>
+                        )}
+                        {announcement.status === 'draft' && (
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(announcement)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
           )}
-        />
+        </div>
       </div>
 
-      {/* Announcement Modal */}
       <AnnouncementModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         announcement={editingAnnouncement}
-        onSave={handleSave}
+        onSave={handleSaveAnnouncement}
       />
     </MainLayout>
   );
