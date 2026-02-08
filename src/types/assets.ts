@@ -1,6 +1,6 @@
 // Asset Management Types
 
-export type AssetCategory = 'immovable' | 'sacred' | 'valuables' | 'operational' | 'vehicles' | 'it';
+export type AssetCategory = 'movable' | 'immovable';
 export type AcquisitionType = 'purchased' | 'donated' | 'historical';
 export type AssetSensitivity = 'normal' | 'high_value' | 'sacred';
 export type AssetCondition = 'excellent' | 'good' | 'fair' | 'poor' | 'condemned';
@@ -329,8 +329,11 @@ export interface Asset {
     disposalDate?: string;
     disposalMethod?: string;
     disposalValue?: number;
+    reason?: string;
   };
   customFields?: Record<string, string>;
+  // Category-specific fields stored as key-value pairs
+  categorySpecificFields?: Record<string, string | number>;
   status: 'active' | 'inactive';
   createdAt: string;
   createdBy: string;
@@ -338,4 +341,15 @@ export interface Asset {
   updatedAt: string;
   updatedBy?: string;
   updatedByName?: string;
+}
+
+export interface AssetAuditEntry {
+  id: string;
+  assetId: string;
+  assetCode: string;
+  action: 'created' | 'updated';
+  assetData: Partial<Asset>; // Full asset details
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
 }

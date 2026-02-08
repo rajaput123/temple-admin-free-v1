@@ -148,7 +148,38 @@ export type Permission =
   | 'social:moderate'
   | 'approvals:read'
   | 'approvals:approve'
-  | 'approvals:reject';
+  | 'approvals:reject'
+  | 'branch:read'
+  | 'branch:write'
+  | 'branch:delete'
+  | 'branch:configure_hierarchy'
+  | 'branch:assign_users'
+  | 'branch:configure_access'
+  | 'pr:dashboard:read'
+  | 'pr:announcements:read'
+  | 'pr:announcements:write'
+  | 'pr:announcements:publish'
+  | 'pr:announcements:approve'
+  | 'pr:messages:read'
+  | 'pr:messages:send'
+  | 'pr:messages:bulk_send'
+  | 'pr:messages:approve'
+  | 'pr:templates:read'
+  | 'pr:templates:write'
+  | 'pr:social:read'
+  | 'pr:social:write'
+  | 'pr:social:publish'
+  | 'pr:social:approve'
+  | 'pr:streaming:read'
+  | 'pr:streaming:write'
+  | 'pr:streaming:go_live'
+  | 'pr:streaming:end_stream'
+  | 'pr:community:read'
+  | 'pr:community:moderate'
+  | 'pr:support:read'
+  | 'pr:support:write'
+  | 'pr:support:assign'
+  | 'pr:reports:read';
 
 const rolePermissions: Record<UserRole, Permission[]> = {
   super_admin: [
@@ -206,6 +237,8 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'crisis:read', 'crisis:write', 'crisis:override',
     'social:read', 'social:write', 'social:publish', 'social:moderate',
     'approvals:read', 'approvals:approve', 'approvals:reject',
+    'branch:read', 'branch:write', 'branch:delete',
+    'branch:configure_hierarchy', 'branch:assign_users', 'branch:configure_access',
   ],
   temple_administrator: [
     'employees:read', 'employees:write', 'employees:delete',
@@ -321,7 +354,6 @@ const rolePermissions: Record<UserRole, Permission[]> = {
     'settlement:read',
     'reports:read',
     'projects:read',
-    'reports:read',
   ],
   priest: [
     'leave:read',
@@ -595,12 +627,12 @@ export function hasPermission(role: UserRole, permission: Permission): boolean {
   return permissions.includes(permission);
 }
 
-export function canAccessModule(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'payroll' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'reports' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests' | 'communications'): boolean {
+export function canAccessModule(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'payroll' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'reports' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests' | 'communications' | 'tasks'): boolean {
   const readPermission = `${module}:read` as Permission;
   return hasPermission(role, readPermission);
 }
 
-export function canWrite(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests' | 'communications'): boolean {
+export function canWrite(role: UserRole, module: 'employees' | 'organization' | 'shifts' | 'leave' | 'attendance' | 'expenses' | 'structure' | 'temples' | 'zones' | 'counters' | 'bookings' | 'rituals' | 'offerings' | 'schedule' | 'festivals' | 'priests' | 'inventory' | 'items' | 'stock_entries' | 'purchase_orders' | 'kitchen' | 'recipes' | 'production' | 'kitchen_stores' | 'prasad' | 'prasad_master' | 'prasad_distribution' | 'quality' | 'seva' | 'cash' | 'settlement' | 'assets' | 'asset_master' | 'asset_movement' | 'asset_audit' | 'maintenance' | 'cv_evidence' | 'disposal' | 'projects' | 'project_master' | 'project_planning' | 'project_budget' | 'project_vendors' | 'project_execution' | 'project_compliance' | 'project_payments' | 'change_requests' | 'communications' | 'tasks'): boolean {
   const writePermission = `${module}:write` as Permission;
   return hasPermission(role, writePermission);
 }

@@ -1,338 +1,502 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, LayoutGrid, LayoutList, Send } from 'lucide-react';
-import { dummyAnnouncements } from '@/data/communications-data';
-import type { Announcement, CommunicationStatus } from '@/types/communications';
-import { usePermissions } from '@/hooks/usePermissions';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
-import { AnnouncementModal } from '@/components/pr/AnnouncementModal';
-import { canUserPerformAction, getNextStatus } from '@/lib/communication-approval-workflow';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
-const statusColors: Record<CommunicationStatus, string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  pending_review: 'bg-yellow-100 text-yellow-700',
-  pending_approval: 'bg-orange-100 text-orange-700',
-  approved: 'bg-blue-100 text-blue-700',
-  published: 'bg-green-100 text-green-700',
-  expired: 'bg-red-100 text-red-700',
-  cancelled: 'bg-gray-100 text-gray-500',
-};
+import { Plus, FileText, Sparkles, Search, List, LayoutGrid, Filter, X } from 'lucide-react';
+import { 
+  getAnnouncements, 
+  createAnnouncement, 
+  updateAnnouncement, 
+  deleteAnnouncement,
+} from '@/lib/pr-communication-store';
+import type { Announcement, AnnouncementStatus, AnnouncementCategory, AnnouncementPriority } from '@/types/pr-communication';
+import { toast } from 'sonner';
+import { AnnouncementForm } from '@/components/pr/announcements/AnnouncementForm';
+import { AnnouncementList } from '@/components/pr/announcements/AnnouncementList';
+import { AnnouncementDetail } from '@/components/pr/announcements/AnnouncementDetail';
+import { EmptyState } from '@/components/pr/shared/EmptyState';
+import { ConfirmationModal } from '@/components/pr/shared/ConfirmationModal';
+import '@/styles/pr-communication.css';
 
 export default function Announcements() {
-  const { checkWriteAccess } = usePermissions();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [announcements, setAnnouncements] = useState<Announcement[]>(dummyAnnouncements);
-  const [statusFilter, setStatusFilter] = useState<CommunicationStatus | 'all'>('all');
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<AnnouncementStatus | 'all'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<AnnouncementCategory | 'all'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<AnnouncementPriority | 'all'>('all');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [viewingAnnouncement, setViewingAnnouncement] = useState<Announcement | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
+  const [announcementToArchive, setAnnouncementToArchive] = useState<string | null>(null);
+  const [componentError, setComponentError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
-  const canWrite = checkWriteAccess('communications');
+  // Component mount/unmount logging
+  useEffect(() => {
+    console.log('[Announcements] Component mounted');
+    return () => {
+      console.log('[Announcements] Component unmounted');
+    };
+  }, []);
 
-  const handleCreateNew = () => {
+  // Safe data fetching with error handling
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        console.log('[Announcements] Loading data...');
+        
+        const data = getAnnouncements();
+        if (Array.isArray(data)) {
+          setAnnouncements(data);
+          console.log('[Announcements] Data loaded successfully:', data.length);
+        } else {
+          console.warn('[Announcements] Invalid data structure, using empty array');
+          setAnnouncements([]);
+        }
+        setComponentError(null);
+      } catch (error) {
+        console.error('[Announcements] Error loading data:', error);
+        setComponentError(error instanceof Error ? error.message : 'Failed to load announcements');
+        setAnnouncements([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Global error handler
+  useEffect(() => {
+    const errorHandler = (e: ErrorEvent) => {
+      console.error('[Announcements] Global error caught:', e.error);
+      setComponentError(e.error?.message || 'An unexpected error occurred');
+    };
+    
+    const unhandledRejection = (e: PromiseRejectionEvent) => {
+      console.error('[Announcements] Unhandled promise rejection:', e.reason);
+      setComponentError(e.reason?.message || 'An unexpected error occurred');
+    };
+
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', unhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', unhandledRejection);
+    };
+  }, []);
+
+
+  // Quick templates
+  const quickTemplates = [
+    {
+      id: 'festival',
+      name: 'Festival Announcement',
+      defaults: {
+        category: 'festival' as AnnouncementCategory,
+        priority: 'high' as AnnouncementPriority,
+        audienceType: 'all' as const,
+      },
+    },
+    {
+      id: 'emergency',
+      name: 'Emergency Notice',
+      defaults: {
+        category: 'emergency' as AnnouncementCategory,
+        priority: 'urgent' as AnnouncementPriority,
+        audienceType: 'all' as const,
+        emergencyPublish: true,
+      },
+    },
+    {
+      id: 'donation',
+      name: 'Donation Campaign',
+      defaults: {
+        category: 'general' as AnnouncementCategory,
+        priority: 'normal' as AnnouncementPriority,
+        audienceType: 'donors' as const,
+      },
+    },
+    {
+      id: 'general',
+      name: 'General Notice',
+      defaults: {
+        category: 'general' as AnnouncementCategory,
+        priority: 'normal' as AnnouncementPriority,
+        audienceType: 'all' as const,
+      },
+    },
+  ];
+
+  const filteredAnnouncements = useMemo(() => {
+    try {
+      if (!Array.isArray(announcements)) {
+        return [];
+      }
+      return announcements.filter(announcement => {
+        if (!announcement) return false;
+        const matchesStatus = statusFilter === 'all' || announcement.status === statusFilter;
+        const matchesCategory = categoryFilter === 'all' || announcement.category === categoryFilter;
+        const matchesPriority = priorityFilter === 'all' || announcement.priority === priorityFilter;
+        const matchesSearch = !searchQuery || announcement.title.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesStatus && matchesCategory && matchesPriority && matchesSearch;
+      });
+    } catch (error) {
+      console.error('[Announcements] Error filtering announcements:', error);
+      return [];
+    }
+  }, [announcements, statusFilter, categoryFilter, priorityFilter, searchQuery]);
+
+  const handleCreate = (templateId?: string) => {
     setEditingAnnouncement(null);
-    setIsModalOpen(true);
+    setIsFormOpen(true);
+    // TODO: Apply template defaults if templateId is provided
   };
 
   const handleEdit = (announcement: Announcement) => {
+    if (announcement.status !== 'draft' && announcement.status !== 'scheduled') {
+      toast.error('Only draft or scheduled announcements can be edited');
+      return;
+    }
     setEditingAnnouncement(announcement);
-    setIsModalOpen(true);
+    setIsFormOpen(true);
   };
 
-  const handleSaveAnnouncement = (data: Partial<Announcement>) => {
+  const handleView = (announcement: Announcement) => {
+    setViewingAnnouncement(announcement);
+    setIsDetailOpen(true);
+  };
+
+  const handleSave = (data: Omit<Announcement, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingAnnouncement) {
-      setAnnouncements(announcements.map(ann => 
-        ann.id === editingAnnouncement.id ? { ...ann, ...data } as Announcement : ann
-      ));
-      toast({ title: 'Announcement Updated', description: 'The announcement has been updated successfully.' });
-    } else {
-      const newAnnouncement: Announcement = {
-        id: `ann-${Date.now()}`,
-        status: 'draft',
-        createdBy: user?.id || 'current-user',
-        createdAt: new Date().toISOString(),
-        channels: [],
-        priority: 'normal',
-        audienceType: 'all',
-        autoExpire: true,
-        version: 1,
-        isLocked: false,
-        expiryNotified: false,
-        ...data,
-      } as Announcement;
-      setAnnouncements([...announcements, newAnnouncement]);
-      toast({ title: 'Announcement Created', description: 'A new announcement has been created.' });
-    }
-    setIsModalOpen(false);
-    setEditingAnnouncement(null);
-  };
-
-  const handleDelete = (announcement: Announcement) => {
-    if (announcement.status === 'draft') {
-      setAnnouncements(announcements.filter(ann => ann.id !== announcement.id));
-      toast({ title: 'Announcement Deleted', description: 'The announcement has been deleted.' });
-    }
-  };
-
-  const handlePublish = (announcement: Announcement) => {
-    if (!user) return;
-    
-    if (canUserPerformAction(user.role, announcement.status, 'publish')) {
-      const nextStatus = getNextStatus(announcement.status, 'publish', user.role);
-      if (nextStatus) {
-        setAnnouncements(announcements.map(ann =>
-          ann.id === announcement.id
-            ? {
-                ...ann,
-                status: nextStatus,
-                publishedBy: user.id,
-                publishedAt: new Date().toISOString(),
-                isLocked: true,
-              } as Announcement
-            : ann
-        ));
-        toast({ title: 'Announcement Published', description: 'The announcement has been published successfully.' });
+      const updated = updateAnnouncement(editingAnnouncement.id, data);
+      if (updated) {
+        setAnnouncements(getAnnouncements());
+        toast.success('Announcement updated successfully');
+        setIsFormOpen(false);
+        setEditingAnnouncement(null);
       }
     } else {
-      toast({
-        title: 'Cannot Publish',
-        description: 'You do not have permission to publish this announcement or it is not in the correct status.',
-        variant: 'destructive',
-      });
+      const newAnnouncement = createAnnouncement(data);
+      setAnnouncements(getAnnouncements());
+      toast.success('Announcement created successfully');
+      setIsFormOpen(false);
     }
   };
 
-  const filteredAnnouncements = announcements.filter((ann) => {
-    const matchesStatus = statusFilter === 'all' || ann.status === statusFilter;
-    return matchesStatus;
-  });
+  const handleDelete = (id: string) => {
+    setAnnouncementToDelete(id);
+    setDeleteConfirmOpen(true);
+  };
 
-  const columns = [
-    {
-      key: 'title',
-      label: 'Title',
-      sortable: true,
-      render: (value: unknown, row: Announcement) => (
-        <div className="max-w-md">
-          <div className="font-medium text-gray-900 truncate">{row.title}</div>
-          <div className="text-xs text-gray-500 mt-0.5">{row.category}</div>
-        </div>
-      ),
-    },
-    {
-      key: 'priority',
-      label: 'Priority',
-      sortable: true,
-      render: (value: unknown, row: Announcement) => (
-        <Badge variant={row.priority === 'urgent' ? 'destructive' : 'outline'}>
-          {row.priority}
-        </Badge>
-      ),
-    },
-    {
-      key: 'audienceType',
-      label: 'Audience',
-      sortable: true,
-      render: (value: unknown, row: Announcement) => (
-        <Badge variant="secondary" className="capitalize">
-          {row.audienceType || 'All'}
-        </Badge>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      render: (value: unknown, row: Announcement) => (
-        <Badge className={statusColors[row.status]}>
-          {row.status.replace('_', ' ')}
-        </Badge>
-      ),
-    },
-    {
-      key: 'validityStart',
-      label: 'Published',
-      sortable: true,
-      render: (value: unknown, row: Announcement) => (
-        <span className="text-sm text-gray-600">
-          {row.validityStart ? new Date(row.validityStart).toLocaleDateString() : '-'}
-        </span>
-      ),
-    },
-    {
-      key: 'validityEnd',
-      label: 'Expires',
-      sortable: true,
-      render: (value: unknown, row: Announcement) => (
-        <span className="text-sm text-gray-600">
-          {row.validityEnd ? new Date(row.validityEnd).toLocaleDateString() : 'Never'}
-        </span>
-      ),
-    },
-    {
-      key: 'views',
-      label: 'Views',
-      render: (value: unknown, row: Announcement) => (
-        <span className="text-sm text-gray-600">{row.views || 0}</span>
-      ),
-    },
-  ];
+  const confirmDelete = () => {
+    if (announcementToDelete) {
+      deleteAnnouncement(announcementToDelete);
+      setAnnouncements(getAnnouncements());
+      toast.success('Announcement deleted successfully');
+      setAnnouncementToDelete(null);
+    }
+  };
+
+  const handleArchive = (id: string) => {
+    setAnnouncementToArchive(id);
+    setArchiveConfirmOpen(true);
+  };
+
+  const confirmArchive = () => {
+    if (announcementToArchive) {
+      updateAnnouncement(announcementToArchive, { status: 'archived' });
+      setAnnouncements(getAnnouncements());
+      toast.success('Announcement archived');
+      setAnnouncementToArchive(null);
+    }
+  };
+
+  // Error display
+  if (componentError) {
+    return (
+      <MainLayout>
+        <PageHeader
+          title="Announcements"
+          description="Manage public announcements and notices"
+          breadcrumbs={[
+            { label: 'Hub', href: '/hub' },
+            { label: 'PR & Communication', href: '/pr' },
+            { label: 'Announcements', href: '/pr/announcements' },
+          ]}
+        />
+        <Card className="p-6">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Announcements</h3>
+            <p className="text-sm text-gray-600 mb-4">{componentError}</p>
+            <Button onClick={() => {
+              setComponentError(null);
+              window.location.reload();
+            }}>Reload Page</Button>
+          </div>
+        </Card>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
       <PageHeader
-        title="Announcements & Notices"
-        description="Manage temple announcements, notices, and public communications"
-        actions={
-          <div className="flex items-center gap-2">
-            <div className="bg-gray-100 p-1 rounded-lg flex items-center border">
-              <Button
-                variant={viewMode === 'table' ? 'outline' : 'ghost'}
-                size="sm"
-                className={`px-2 h-7 ${viewMode === 'table' ? 'shadow-sm bg-white' : ''}`}
-                onClick={() => setViewMode('table')}
-              >
-                <LayoutList className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'cards' ? 'outline' : 'ghost'}
-                size="sm"
-                className={`px-2 h-7 ${viewMode === 'cards' ? 'shadow-sm bg-white' : ''}`}
-                onClick={() => setViewMode('cards')}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
-            {canWrite && (
-              <Button onClick={handleCreateNew}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Announcement
-              </Button>
-            )}
-          </div>
-        }
+        title="Announcements"
+        description="Manage public announcements and notices"
+        breadcrumbs={[
+          { label: 'Hub', href: '/hub' },
+          { label: 'PR & Communication', href: '/pr' },
+          { label: 'Announcements', href: '/pr/announcements' },
+        ]}
       />
 
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-              {['all', 'draft', 'published', 'expired'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setStatusFilter(tab as any)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${statusFilter === tab
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
+      <div className="space-y-4">
+        {/* Filters and Search Bar */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Left: Filters and Search */}
+          <div className="flex items-center gap-3 flex-wrap flex-1">
+            {/* Status Filter Dropdown */}
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as AnnouncementStatus | 'all')}>
+              <SelectTrigger className="w-[140px] h-9">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                  <SelectValue placeholder="Status" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {(['all', 'draft', 'scheduled', 'published', 'archived'] as const).map(s => (
+                  <SelectItem key={s} value={s}>
+                    {s === 'all' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          {viewMode === 'table' ? (
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-              <DataTable
-                data={filteredAnnouncements}
-                columns={columns}
-                actions={(row) => (
-                  <div className="flex items-center gap-2">
-                    {canWrite && (
-                      <>
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(row)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {row.status === 'approved' && user && canUserPerformAction(user.role, row.status, 'publish') && (
-                          <Button variant="ghost" size="sm" onClick={() => handlePublish(row)} className="text-green-600">
-                            <Send className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {row.status === 'draft' && (
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(row)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+            {/* Category Filter Dropdown */}
+            <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as AnnouncementCategory | 'all')}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {(['all', 'festival', 'general', 'emergency', 'policy'] as const).map(c => (
+                  <SelectItem key={c} value={c}>
+                    {c === 'all' ? 'All Categories' : c.charAt(0).toUpperCase() + c.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Priority Filter Dropdown */}
+            <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v as AnnouncementPriority | 'all')}>
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                {(['all', 'low', 'normal', 'high', 'urgent'] as const).map(p => (
+                  <SelectItem key={p} value={p}>
+                    {p === 'all' ? 'All Priorities' : p.charAt(0).toUpperCase() + p.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Search Bar */}
+            <div className="relative flex-1 min-w-[200px] max-w-[400px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search announcements by title..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-9"
               />
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAnnouncements.map((announcement) => (
-                <Card key={announcement.id} className="group hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <Badge variant="outline" className="capitalize">{announcement.category}</Badge>
-                      <Badge className={statusColors[announcement.status]}>
-                        {announcement.status}
-                      </Badge>
-                    </div>
-                    <CardTitle className="mt-2 line-clamp-2 leading-tight">
-                      {announcement.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pb-3">
-                    <p className="text-sm text-gray-500 line-clamp-3 mb-4">
-                      {announcement.content}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium">{announcement.views || 0}</span> views
-                      </div>
-                      <div>
-                        Expires: {new Date(announcement.validityEnd).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-3 border-t flex justify-end gap-2">
-                    {canWrite && (
-                      <>
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
-                          Edit
-                        </Button>
-                        {announcement.status === 'approved' && user && canUserPerformAction(user.role, announcement.status, 'publish') && (
-                          <Button variant="default" size="sm" onClick={() => handlePublish(announcement)} className="bg-green-600 hover:bg-green-700">
-                            Publish
-                          </Button>
-                        )}
-                        {announcement.status === 'draft' && (
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(announcement)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
+
+            {/* Active Filters Badge */}
+            {(statusFilter !== 'all' || categoryFilter !== 'all' || priorityFilter !== 'all') && (
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="gap-1.5 h-7 px-2.5">
+                  <span className="text-xs">
+                    {[
+                      statusFilter !== 'all' && statusFilter,
+                      categoryFilter !== 'all' && categoryFilter,
+                      priorityFilter !== 'all' && priorityFilter,
+                    ].filter(Boolean).length} active
+                  </span>
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setCategoryFilter('all');
+                    setPriorityFilter('all');
+                    setSearchQuery('');
+                  }}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Action Buttons */}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 h-9 bg-background hover:bg-muted">
+                  <Sparkles className="h-4 w-4" />
+                  Quick Create
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {quickTemplates.map(template => (
+                  <DropdownMenuItem
+                    key={template.id}
+                    onClick={() => handleCreate(template.id)}
+                  >
+                    {template.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button size="sm" className="gap-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleCreate()}>
+              <Plus className="h-4 w-4" />
+              Create
+            </Button>
+          </div>
         </div>
+
+        {/* Data Table */}
+        {filteredAnnouncements.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="No announcements found"
+            description={searchQuery ? "Try adjusting your search or filters" : "Get started by creating your first announcement"}
+            actionLabel={!searchQuery ? "Create Announcement" : undefined}
+            onAction={!searchQuery ? handleCreate : undefined}
+          />
+        ) : (
+          <Card className="border rounded-lg">
+            <CardContent className="p-0">
+              <div className="p-4 border-b flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  {filteredAnnouncements.length} announcement{filteredAnnouncements.length !== 1 ? 's' : ''}
+                </div>
+                <div className="flex items-center gap-1 border rounded-md">
+                  <Button
+                    variant={viewMode === 'table' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-8 px-3 rounded-r-none"
+                    onClick={() => setViewMode('table')}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="h-8 px-3 rounded-l-none"
+                    onClick={() => setViewMode('grid')}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <AnnouncementList
+                announcements={filteredAnnouncements}
+                onView={handleView}
+                onEdit={handleEdit}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
+                viewMode={viewMode}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      <AnnouncementModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        announcement={editingAnnouncement}
-        onSave={handleSaveAnnouncement}
+      {/* Create/Edit Form Sheet */}
+      <Sheet open={isFormOpen} onOpenChange={(open) => {
+        setIsFormOpen(open);
+        if (!open) {
+          setEditingAnnouncement(null);
+        }
+      }}>
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
+              {editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}
+            </SheetTitle>
+            <SheetDescription>
+              {editingAnnouncement ? 'Update announcement details' : 'Create a new announcement'}
+            </SheetDescription>
+          </SheetHeader>
+          <AnnouncementForm
+            announcement={editingAnnouncement}
+            onSave={handleSave}
+            onCancel={() => setIsFormOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* Detail View Sheet */}
+      <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Announcement Details</SheetTitle>
+            <SheetDescription>View announcement information</SheetDescription>
+          </SheetHeader>
+          {viewingAnnouncement && (
+            <AnnouncementDetail
+              announcement={viewingAnnouncement}
+              onEdit={() => {
+                setIsDetailOpen(false);
+                handleEdit(viewingAnnouncement);
+              }}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        onConfirm={confirmDelete}
+        title="Delete Announcement?"
+        description="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+
+      {/* Archive Confirmation Modal */}
+      <ConfirmationModal
+        open={archiveConfirmOpen}
+        onOpenChange={setArchiveConfirmOpen}
+        onConfirm={confirmArchive}
+        title="Archive Announcement?"
+        description="This announcement will be archived and hidden from public view. You can restore it later if needed."
+        confirmText="Archive"
+        variant="default"
       />
     </MainLayout>
   );

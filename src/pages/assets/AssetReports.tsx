@@ -1,12 +1,38 @@
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { dummyAssets } from '@/data/assets-data';
 import { usePermissions } from '@/hooks/usePermissions';
+import { getStoredAssets } from '@/lib/assets/asset-store';
 
 export default function AssetReports() {
   const { checkModuleAccess } = usePermissions();
+  const [assets, setAssets] = useState(getStoredAssets());
+
+  // Load assets from localStorage on mount and when page becomes visible
+  useEffect(() => {
+    const loadAssets = () => {
+      const storedAssets = getStoredAssets();
+      setAssets(storedAssets);
+    };
+    
+    loadAssets();
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAssets();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', loadAssets);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', loadAssets);
+    };
+  }, []);
 
   if (!checkModuleAccess('assets')) {
     return (
@@ -36,7 +62,7 @@ export default function AssetReports() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Total Assets: {dummyAssets.length}
+                Total Assets: {assets.length}
               </p>
             </CardContent>
           </Card>

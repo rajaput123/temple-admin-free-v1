@@ -23,7 +23,7 @@ import { EmployeeDocuments } from '@/components/hr/EmployeeDocuments';
 import { EmployeeDocument } from '@/types/hr';
 import { useAuth } from '@/contexts/AuthContext';
 import { CustomFieldsRenderer } from '@/components/hr/CustomFieldsRenderer';
-import { addEmployee } from '@/lib/hr-employee-store';
+import { addEmployee, getEmployees } from '@/lib/hr-employee-store';
 import type { Employee } from '@/types/erp';
 
 import { departments, designations, shifts, gradePays, leaveTypes } from '@/data/hr-dummy-data';
@@ -59,6 +59,7 @@ export default function EmployeeOnboarding() {
     confirmMpin: '',
     department: '',
     designation: '',
+    reportingTo: '',
     employmentType: 'full_time',
     jobDescription: '',
 
@@ -253,6 +254,15 @@ export default function EmployeeOnboarding() {
     return Array.from(byId.values());
   }, [formData.department, formData.designation]);
 
+  // Get employees for reporting manager dropdown
+  const reportingManagerOptions = useMemo(() => {
+    const employees = getEmployees();
+    return employees.map(emp => ({
+      value: emp.id,
+      label: `${emp.name} - ${emp.designation}`,
+    }));
+  }, []);
+
   return (
     <MainLayout>
       <PageHeader
@@ -283,6 +293,11 @@ export default function EmployeeOnboarding() {
           <ScrollArea className="flex-1 py-6">
             {/* Overview Tab */}
             <TabsContent value="overview" className="m-0 space-y-6">
+              <div className="space-y-2 mb-6">
+                <h3 className="text-lg font-semibold text-foreground">Basic Information</h3>
+                <p className="text-sm text-muted-foreground">Enter the basic employee details</p>
+              </div>
+              
               <div className="grid grid-cols-3 gap-6">
                 <div className="form-field">
                   <Label className="form-label">Employee Code</Label>
@@ -396,6 +411,15 @@ export default function EmployeeOnboarding() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="form-field">
+                  <Label className="form-label">Reporting Manager</Label>
+                  <SearchableSelect
+                    options={reportingManagerOptions}
+                    value={formData.reportingTo}
+                    onChange={(value) => updateForm('reportingTo', value)}
+                    placeholder="Select reporting manager"
+                  />
+                </div>
+                <div className="form-field">
                   <Label className="form-label">Employment Type</Label>
                   <Select
                     value={formData.employmentType}
@@ -412,20 +436,26 @@ export default function EmployeeOnboarding() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="form-field">
-                  <Label className="form-label">Job Description (JD)</Label>
-                  <Textarea
-                    value={formData.jobDescription}
-                    onChange={(e) => updateForm('jobDescription', e.target.value)}
-                    placeholder="Enter job description / responsibilities"
-                    rows={4}
-                  />
-                </div>
+              </div>
+
+              <div className="form-field">
+                <Label className="form-label">Job Description (JD)</Label>
+                <Textarea
+                  value={formData.jobDescription}
+                  onChange={(e) => updateForm('jobDescription', e.target.value)}
+                  placeholder="Enter job description / responsibilities"
+                  rows={4}
+                />
               </div>
             </TabsContent>
 
             {/* Joining Tab */}
             <TabsContent value="joining" className="m-0 space-y-6">
+              <div className="space-y-2 mb-6">
+                <h3 className="text-lg font-semibold text-foreground">Joining Details</h3>
+                <p className="text-sm text-muted-foreground">Enter joining date and related information</p>
+              </div>
+              
               <div className="grid grid-cols-2 gap-6">
                 <div className="form-field">
                   <Label className="form-label">
@@ -469,6 +499,11 @@ export default function EmployeeOnboarding() {
 
             {/* Address Tab */}
             <TabsContent value="address" className="m-0 space-y-6">
+              <div className="space-y-2 mb-6">
+                <h3 className="text-lg font-semibold text-foreground">Address & Contact Information</h3>
+                <p className="text-sm text-muted-foreground">Enter current and permanent address details</p>
+              </div>
+              
               <div className="form-field">
                 <Label className="form-label">Current Address</Label>
                 <Textarea
@@ -549,6 +584,11 @@ export default function EmployeeOnboarding() {
 
             {/* Shift Tab */}
             <TabsContent value="shift" className="m-0 space-y-6">
+              <div className="space-y-2 mb-6">
+                <h3 className="text-lg font-semibold text-foreground">Shift & Attendance</h3>
+                <p className="text-sm text-muted-foreground">Configure shift and work location</p>
+              </div>
+              
               <div className="grid grid-cols-2 gap-6">
                 <div className="form-field">
                   <Label className="form-label">Shift</Label>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -6,22 +6,48 @@ import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Plus, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Eye, Edit } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { Asset } from '@/types/assets';
 import { DisposalRequestModal } from '@/components/assets/DisposalRequestModal';
-import { dummyAssets } from '@/data/assets-data';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
+import { getStoredAssets, updateAsset } from '@/lib/assets/asset-store';
 
 export default function AssetDisposal() {
   const { checkModuleAccess, checkWriteAccess } = usePermissions();
   const { user } = useAuth();
-  const [assets, setAssets] = useState<Asset[]>(dummyAssets);
+  const [assets, setAssets] = useState<Asset[]>(getStoredAssets());
   const [disposalModalOpen, setDisposalModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Load assets from localStorage on mount and when page becomes visible
+  useEffect(() => {
+    const loadAssets = () => {
+      const storedAssets = getStoredAssets();
+      setAssets(storedAssets);
+    };
+    
+    loadAssets();
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAssets();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', loadAssets);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', loadAssets);
+    };
+  }, []);
 
   if (!checkModuleAccess('assets')) {
     return (
@@ -61,7 +87,8 @@ export default function AssetDisposal() {
   }, [disposalAssets, statusFilter, categoryFilter, searchQuery]);
 
   const handleSaveDisposal = (assetId: string, disposalData: any) => {
-    setAssets(assets.map(a => {
+    // Update local state
+    const updatedAssets = assets.map(a => {
       if (a.id === assetId) {
         return {
           ...a,
@@ -72,7 +99,27 @@ export default function AssetDisposal() {
         };
       }
       return a;
-    }));
+    });
+    setAssets(updatedAssets);
+    
+    // Update asset in Asset Master
+    updateAsset(assetId, {
+      disposalApproval: {
+        ...assets.find(a => a.id === assetId)?.disposalApproval,
+        ...disposalData,
+      },
+    });
+    
+    // If disposal is completed, update asset status to inactive
+    if (disposalData.disposalDate) {
+      updateAsset(assetId, {
+        status: 'inactive',
+        lifecycleStatus: 'disposed',
+      });
+      // Reload assets to reflect changes
+      setAssets(getStoredAssets());
+    }
+    
     setDisposalModalOpen(false);
     setSelectedAsset(null);
   };
@@ -127,29 +174,59 @@ export default function AssetDisposal() {
       },
     },
     {
+      key: 'approvedAt',
+      label: 'Approved Date',
+      render: (_: unknown, row: Asset) => {
+        const approvedAt = row.disposalApproval?.approvedAt;
+        return approvedAt ? new Date(approvedAt).toLocaleDateString() : '-';
+      },
+    },
+    {
+      key: 'disposalDate',
+      label: 'Disposal Date',
+      render: (_: unknown, row: Asset) => {
+        const disposalDate = row.disposalApproval?.disposalDate;
+        return disposalDate ? (
+          <div className="text-sm font-medium text-green-600">
+            {new Date(disposalDate).toLocaleDateString()}
+          </div>
+        ) : '-';
+      },
+    },
+    {
       key: 'status',
       label: 'Status',
       render: (_: unknown, row: Asset) => {
         const status = getDisposalStatus(row);
-        const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-          pending: 'outline',
-          approved: 'default',
-          completed: 'default',
-          none: 'secondary',
-        };
+        const variant =
+          status === 'completed' ? 'bg-green-500 text-white' :
+          status === 'approved' ? 'bg-blue-500 text-white' :
+          status === 'pending' ? 'bg-yellow-500 text-black' :
+          'bg-gray-500 text-white';
         const labels: Record<string, string> = {
           pending: 'Pending',
           approved: 'Approved',
           completed: 'Completed',
           none: 'No Request',
         };
-        return <Badge variant={variants[status] || 'secondary'}>{labels[status]}</Badge>;
+        return (
+          <Badge className={cn('capitalize', variant)}>
+            {labels[status]}
+          </Badge>
+        );
       },
     },
   ];
 
-  const pendingCount = useMemo(() => disposalAssets.filter(a => getDisposalStatus(a) === 'pending').length, [disposalAssets, getDisposalStatus]);
-  const approvedCount = useMemo(() => disposalAssets.filter(a => getDisposalStatus(a) === 'approved').length, [disposalAssets, getDisposalStatus]);
+  const disposalStats = useMemo(() => {
+    const pending = disposalAssets.filter(a => getDisposalStatus(a) === 'pending').length;
+    const approved = disposalAssets.filter(a => getDisposalStatus(a) === 'approved').length;
+    const completed = disposalAssets.filter(a => getDisposalStatus(a) === 'completed').length;
+    const totalValue = disposalAssets
+      .filter(a => getDisposalStatus(a) === 'completed' && a.disposalApproval?.disposalValue)
+      .reduce((sum, a) => sum + (a.disposalApproval?.disposalValue || 0), 0);
+    return { pending, approved, completed, totalValue };
+  }, [disposalAssets, getDisposalStatus]);
 
   return (
     <MainLayout>
@@ -171,15 +248,31 @@ export default function AssetDisposal() {
 
       <div className="space-y-4">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-card rounded-lg border p-4">
-            <div className="text-sm text-muted-foreground">Pending Requests</div>
-            <div className="text-2xl font-bold">{pendingCount}</div>
-          </div>
-          <div className="bg-card rounded-lg border p-4">
-            <div className="text-sm text-muted-foreground">Approved</div>
-            <div className="text-2xl font-bold">{approvedCount}</div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-sm text-muted-foreground">Pending Requests</div>
+              <div className="text-2xl font-bold text-yellow-600">{disposalStats.pending}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-sm text-muted-foreground">Approved</div>
+              <div className="text-2xl font-bold text-blue-600">{disposalStats.approved}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-sm text-muted-foreground">Completed</div>
+              <div className="text-2xl font-bold text-green-600">{disposalStats.completed}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-sm text-muted-foreground">Total Disposal Value</div>
+              <div className="text-2xl font-bold">₹{disposalStats.totalValue.toLocaleString()}</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}
@@ -224,11 +317,19 @@ export default function AssetDisposal() {
             columns={disposalColumns}
             actions={(row: Asset) => (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => {
-                  setSelectedAsset(row);
-                  setDisposalModalOpen(true);
-                }}>
-                  <Eye className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedAsset(row);
+                    setDisposalModalOpen(true);
+                  }}
+                >
+                  {getDisposalStatus(row) === 'none' ? (
+                    <Edit className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             )}

@@ -1,0 +1,368 @@
+/* PR & Communication Module - Enhanced Design System */
+
+/* Design Tokens - Using CSS Variables for Consistency */
+:root {
+  /* Primary Colors - Saffron/Gold Theme */
+  --pr-primary: #F59E0B; /* amber-500 */
+  --pr-primary-light: #FCD34D; /* amber-300 */
+  --pr-primary-dark: #D97706; /* amber-600 */
+  --pr-primary-hover: #FBBF24; /* amber-400 */
+  --pr-primary-50: #FFFBEB; /* amber-50 */
+  --pr-primary-100: #FEF3C7; /* amber-100 */
+  --pr-primary-200: #FDE68A; /* amber-200 */
+  
+  /* Status Colors */
+  --pr-status-published: #10B981; /* green-500 */
+  --pr-status-draft: #6B7280; /* gray-500 */
+  --pr-status-scheduled: #3B82F6; /* blue-500 */
+  --pr-status-archived: #64748B; /* slate-500 */
+  --pr-status-urgent: #EF4444; /* red-500 */
+  --pr-status-sent: #10B981; /* green-500 */
+  --pr-status-delivered: #059669; /* green-600 */
+  --pr-status-failed: #EF4444; /* red-500 */
+  
+  /* Semantic Colors */
+  --pr-success: #10B981;
+  --pr-success-bg: #D1FAE5;
+  --pr-success-border: #A7F3D0;
+  
+  --pr-warning: #F59E0B;
+  --pr-warning-bg: #FEF3C7;
+  --pr-warning-border: #FDE68A;
+  
+  --pr-error: #EF4444;
+  --pr-error-bg: #FEE2E2;
+  --pr-error-border: #FECACA;
+  
+  --pr-info: #3B82F6;
+  --pr-info-bg: #DBEAFE;
+  --pr-info-border: #BFDBFE;
+  
+  /* Spacing Scale */
+  --pr-space-xs: 0.25rem; /* 4px */
+  --pr-space-sm: 0.5rem; /* 8px */
+  --pr-space-md: 1rem; /* 16px */
+  --pr-space-lg: 1.5rem; /* 24px */
+  --pr-space-xl: 2rem; /* 32px */
+  --pr-space-2xl: 3rem; /* 48px */
+  
+  /* Border Radius */
+  --pr-radius-sm: 0.375rem; /* 6px */
+  --pr-radius-md: 0.5rem; /* 8px */
+  --pr-radius-lg: 0.75rem; /* 12px */
+  --pr-radius-xl: 1rem; /* 16px */
+  
+  /* Shadows */
+  --pr-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --pr-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --pr-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --pr-shadow-primary: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06);
+  
+  /* Transitions */
+  --pr-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --pr-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --pr-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Primary Button with Enhanced Styling */
+.pr-btn-primary {
+  background-color: var(--pr-primary);
+  color: white;
+  border: none;
+  font-weight: 500;
+  transition: all var(--pr-transition-base);
+  box-shadow: var(--pr-shadow-sm);
+}
+
+.pr-btn-primary:hover {
+  background-color: var(--pr-primary-hover);
+  box-shadow: var(--pr-shadow-md);
+  transform: translateY(-1px);
+}
+
+.pr-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--pr-shadow-sm);
+}
+
+.pr-btn-primary:focus-visible {
+  outline: 2px solid var(--pr-primary);
+  outline-offset: 2px;
+}
+
+/* Status Badges with Enhanced Design */
+.pr-badge-published {
+  background-color: var(--pr-success-bg);
+  color: var(--pr-status-published);
+  border: 1px solid var(--pr-success-border);
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--pr-radius-md);
+  font-size: 0.75rem;
+}
+
+.pr-badge-draft {
+  background-color: #F3F4F6;
+  color: var(--pr-status-draft);
+  border: 1px solid #E5E7EB;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--pr-radius-md);
+  font-size: 0.75rem;
+}
+
+.pr-badge-scheduled {
+  background-color: var(--pr-info-bg);
+  color: var(--pr-status-scheduled);
+  border: 1px solid var(--pr-info-border);
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--pr-radius-md);
+  font-size: 0.75rem;
+}
+
+.pr-badge-archived {
+  background-color: #F1F5F9;
+  color: var(--pr-status-archived);
+  border: 1px solid #E2E8F0;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--pr-radius-md);
+  font-size: 0.75rem;
+}
+
+.pr-badge-urgent {
+  background-color: var(--pr-error-bg);
+  color: var(--pr-status-urgent);
+  border: 1px solid var(--pr-error-border);
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--pr-radius-md);
+  font-size: 0.75rem;
+}
+
+/* Enhanced Card Styling */
+.pr-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--pr-radius-lg);
+  padding: var(--pr-space-lg);
+  box-shadow: var(--pr-shadow-sm);
+  transition: all var(--pr-transition-base);
+}
+
+.pr-card:hover {
+  box-shadow: var(--pr-shadow-md);
+  border-color: #D1D5DB;
+}
+
+.pr-card:focus-within {
+  box-shadow: var(--pr-shadow-md);
+  border-color: var(--pr-primary);
+}
+
+/* KPI Card with Enhanced Interactions */
+.pr-kpi-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--pr-radius-xl);
+  padding: var(--pr-space-lg);
+  cursor: pointer;
+  transition: all var(--pr-transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.pr-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--pr-primary), var(--pr-primary-light));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--pr-transition-base);
+}
+
+.pr-kpi-card:hover {
+  border-color: var(--pr-primary);
+  box-shadow: var(--pr-shadow-primary);
+  transform: translateY(-2px);
+}
+
+.pr-kpi-card:hover::before {
+  transform: scaleX(1);
+}
+
+.pr-kpi-card:active {
+  transform: translateY(0);
+}
+
+.pr-kpi-card .kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: var(--pr-space-sm);
+  line-height: 1.2;
+}
+
+.pr-kpi-card .kpi-label {
+  font-size: 0.875rem;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+/* Typography Enhancements */
+.pr-heading {
+  color: #111827;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.025em;
+}
+
+.pr-text {
+  color: #111827;
+  line-height: 1.6;
+}
+
+.pr-text-muted {
+  color: #6B7280;
+}
+
+/* Form Input Enhancements */
+.pr-input {
+  transition: all var(--pr-transition-base);
+}
+
+.pr-input:focus {
+  border-color: var(--pr-primary);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.pr-input-error {
+  border-color: var(--pr-error);
+}
+
+.pr-input-error:focus {
+  border-color: var(--pr-error);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Loading States */
+.pr-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.pr-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Accessibility Enhancements */
+.pr-focus-ring {
+  outline: 2px solid var(--pr-primary);
+  outline-offset: 2px;
+}
+
+.pr-focus-ring:focus-visible {
+  outline: 2px solid var(--pr-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth Animations */
+.pr-fade-in {
+  animation: fadeIn var(--pr-transition-base) ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pr-slide-in {
+  animation: slideIn var(--pr-transition-base) ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mobile Responsive Enhancements */
+@media (max-width: 768px) {
+  .pr-card {
+    padding: var(--pr-space-md);
+    border-radius: var(--pr-radius-md);
+  }
+  
+  .pr-kpi-card {
+    padding: var(--pr-space-md);
+    border-radius: var(--pr-radius-lg);
+  }
+  
+  .pr-kpi-card .kpi-value {
+    font-size: 1.5rem;
+  }
+  
+  .pr-kpi-card .kpi-label {
+    font-size: 0.75rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .pr-card {
+    box-shadow: none;
+    border: 1px solid #E5E7EB;
+  }
+  
+  .pr-kpi-card {
+    break-inside: avoid;
+  }
+}
+
+/* Dark Mode Support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pr-bg: #1F2937;
+    --pr-text: #F9FAFB;
+    --pr-text-muted: #9CA3AF;
+  }
+}

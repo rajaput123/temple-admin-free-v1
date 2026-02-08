@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, Share2, Calendar, Facebook, Twitter, Instagram } from 'lucide-react';
+import { Plus, Search, Share2, Calendar, Facebook, Twitter, Instagram, History } from 'lucide-react';
 import { dummySocialChannels, dummySocialPosts, dummyContentCalendars } from '@/data/communications-data';
 import type { SocialPost, SocialPlatform } from '@/types/communications';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
+import { CreatePostModal } from '@/components/pr/communication/CreatePostModal';
+import { PostLog } from '@/components/pr/communication/PostLog';
+import { toast } from 'sonner';
+import '@/styles/pr-communication.css';
 
 const platformIcons: Record<SocialPlatform, any> = {
   facebook: Facebook,
@@ -22,17 +27,112 @@ const platformIcons: Record<SocialPlatform, any> = {
 
 export default function SocialDigital() {
   const { checkWriteAccess } = usePermissions();
-  const { toast } = useToast();
-  const [channels] = useState(dummySocialChannels);
-  const [posts] = useState<SocialPost[]>(dummySocialPosts);
+  const [channels, setChannels] = useState(dummySocialChannels);
+  const [posts, setPosts] = useState<SocialPost[]>(dummySocialPosts);
   const [calendars] = useState(dummyContentCalendars);
   const [searchQuery, setSearchQuery] = useState('');
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'channels' | 'posts' | 'calendar'>('posts');
+
+  // Component mount/unmount logging
+  useEffect(() => {
+    console.log('[SocialDigital] Component mounted');
+    return () => {
+      console.log('[SocialDigital] Component unmounted');
+    };
+  }, []);
+
+  // Global error handler
+  useEffect(() => {
+    const errorHandler = (e: ErrorEvent) => {
+      console.error('[SocialDigital] Global error caught:', e.error);
+      setHasError(true);
+      setErrorMessage(e.error?.message || 'An unexpected error occurred');
+    };
+    
+    const unhandledRejection = (e: PromiseRejectionEvent) => {
+      console.error('[SocialDigital] Unhandled promise rejection:', e.reason);
+      setHasError(true);
+      setErrorMessage(e.reason?.message || 'An unexpected error occurred');
+    };
+
+    window.addEventListener('error', errorHandler);
+    window.addEventListener('unhandledrejection', unhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', errorHandler);
+      window.removeEventListener('unhandledrejection', unhandledRejection);
+    };
+  }, []);
 
   const canWrite = checkWriteAccess('communications');
 
   const filteredPosts = posts.filter((post) =>
     post.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCreatePost = (data: {
+    content: string;
+    platforms: SocialPlatform[];
+    mediaFiles?: File[];
+  }) => {
+    // Convert to SocialPost format (using communications type)
+    const newPost: SocialPost = {
+      id: `POST-${String(posts.length + 1).padStart(3, '0')}`,
+      platform: data.platforms[0] as any, // Using first platform for compatibility
+      content: data.content,
+      mediaUrls: data.mediaFiles?.map(f => URL.createObjectURL(f)) || [],
+      status: 'published',
+      moderationStatus: 'approved',
+      isPinned: false,
+      priority: 'normal' as any,
+      engagementMetrics: {
+        likes: 0,
+        shares: 0,
+        comments: 0,
+        views: 0,
+      },
+      publishedAt: new Date().toISOString(),
+      createdBy: 'current-user',
+      createdAt: new Date().toISOString(),
+      version: 1,
+      isLocked: false,
+    };
+
+    setPosts(prev => [newPost, ...prev]);
+    toast.success('Post created successfully', {
+      description: `Posted to ${data.platforms.length} platform(s)`,
+    });
+    setIsPostModalOpen(false);
+    setActiveTab('posts');
+  };
+
+
+  // Error state
+  if (hasError) {
+    return (
+      <MainLayout>
+        <PageHeader
+          title="Social & Digital"
+          description="Manage social media presence and digital content"
+          breadcrumbs={[
+            { label: 'Hub', href: '/hub' },
+            { label: 'PR & Communication', href: '/pr' },
+            { label: 'Social & Digital', href: '/pr/social' },
+          ]}
+        />
+        <Card className="p-6">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-red-600 mb-2">Error Loading Social & Digital</h3>
+            <p className="text-sm text-gray-600 mb-4">{errorMessage || 'An unexpected error occurred'}</p>
+            <Button onClick={() => window.location.reload()}>Reload Page</Button>
+          </div>
+        </Card>
+      </MainLayout>
+    );
+  }
 
   const channelColumns = [
     {
@@ -222,19 +322,22 @@ export default function SocialDigital() {
   return (
     <MainLayout>
       <PageHeader
-        title="Social & Digital Channels"
+        title="Social & Digital"
         description="Manage official social media accounts, content publishing, and moderation"
         actions={
           canWrite ? (
-            <Button onClick={() => toast({ title: 'Coming Soon', description: 'Post creation feature will be available soon.' })}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Post
+            <Button 
+              onClick={() => setIsPostModalOpen(true)}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Post
             </Button>
           ) : undefined
         }
       />
 
-      <Tabs defaultValue="channels" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-4">
         <TabsList>
           <TabsTrigger value="channels">
             <Share2 className="h-4 w-4 mr-2" />
@@ -262,47 +365,17 @@ export default function SocialDigital() {
           <DataTable data={channels} columns={channelColumns} />
         </TabsContent>
 
-        <TabsContent value="posts">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search posts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm"
-                />
+        <TabsContent value="posts" className="m-0">
+          <div className="h-full flex flex-col">
+            <div className="flex items-center justify-between border-b pb-4 mb-6">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">Social Posts</h2>
+                <p className="text-muted-foreground">
+                  View and manage all your social media posts
+                </p>
               </div>
             </div>
-
-            <div className="grid grid-cols-4 gap-4">
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="text-sm text-gray-600">Total Posts</div>
-                <div className="text-2xl font-bold mt-1">{posts.length}</div>
-              </div>
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="text-sm text-gray-600">Published</div>
-                <div className="text-2xl font-bold mt-1 text-green-600">
-                  {posts.filter(p => p.status === 'published').length}
-                </div>
-              </div>
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="text-sm text-gray-600">Pending Moderation</div>
-                <div className="text-2xl font-bold mt-1 text-yellow-600">
-                  {posts.filter(p => p.moderationStatus === 'pending').length}
-                </div>
-              </div>
-              <div className="bg-white p-4 rounded-lg border">
-                <div className="text-sm text-gray-600">Flagged</div>
-                <div className="text-2xl font-bold mt-1 text-red-600">
-                  {posts.filter(p => p.misinformationFlags && p.misinformationFlags.length > 0).length}
-                </div>
-              </div>
-            </div>
-
-            <DataTable data={filteredPosts} columns={postColumns} />
+            <PostLog posts={posts} />
           </div>
         </TabsContent>
 
@@ -318,6 +391,13 @@ export default function SocialDigital() {
           <DataTable data={calendars} columns={calendarColumns} />
         </TabsContent>
       </Tabs>
+
+      {/* Modals */}
+      <CreatePostModal
+        open={isPostModalOpen}
+        onOpenChange={setIsPostModalOpen}
+        onPost={handleCreatePost}
+      />
     </MainLayout>
   );
 }

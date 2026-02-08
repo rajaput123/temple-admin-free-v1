@@ -287,4 +287,170 @@
   .glass {
     @apply bg-background/80 backdrop-blur-md;
   }
+
+  /* Task Management Gradients */
+  .gradient-urgent {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  .gradient-high {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  }
+
+  .gradient-medium {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  }
+
+  .gradient-low {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(24 72% 24%) 0%, hsl(24 72% 18%) 100%);
+  }
+
+  /* Task Card Styles */
+  .task-card {
+    @apply rounded-xl border bg-card p-4 transition-all duration-300 ease-out;
+    @apply hover:shadow-lg hover:-translate-y-1 border-t-2;
+  }
+
+  .task-card.urgent {
+    border-top-color: #ef4444;
+  }
+
+  .task-card.high {
+    border-top-color: #f97316;
+  }
+
+  .task-card.medium {
+    border-top-color: #3b82f6;
+  }
+
+  .task-card.low {
+    border-top-color: #6b7280;
+  }
+
+  .task-card-compact {
+    @apply rounded-lg border bg-card p-3 transition-all duration-200 ease-out;
+    @apply hover:shadow-md hover:-translate-y-0.5 border-t-2;
+  }
+
+  .task-card-compact.urgent {
+    border-top-color: #ef4444;
+  }
+
+  .task-card-compact.high {
+    border-top-color: #f97316;
+  }
+
+  .task-card-compact.medium {
+    border-top-color: #3b82f6;
+  }
+
+  .task-card-compact.low {
+    border-top-color: #6b7280;
+  }
+
+  /* Stat Card with Gradient */
+  .stat-card {
+    @apply relative overflow-hidden rounded-xl bg-card p-6 transition-all duration-300;
+    @apply hover:shadow-xl hover:-translate-y-1;
+  }
+
+
+  /* Kanban Column */
+  .kanban-column {
+    @apply rounded-xl border bg-muted/30 p-4 backdrop-blur-sm;
+    min-height: 400px;
+  }
+
+  /* Priority Badge */
+  .priority-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider;
+    @apply transition-all duration-200;
+  }
+
+  .priority-badge.urgent {
+    @apply bg-red-50 text-red-700 border border-red-100;
+  }
+
+  .priority-badge.high {
+    @apply bg-orange-50 text-orange-700 border border-orange-100;
+  }
+
+  .priority-badge.medium {
+    @apply bg-blue-50 text-blue-700 border border-blue-100;
+  }
+
+  .priority-badge.low {
+    @apply bg-gray-50 text-gray-700 border border-gray-100;
+  }
+
+  /* Glassmorphism */
+  .glass-card {
+    @apply bg-background/60 backdrop-blur-lg border border-border/50;
+    @apply rounded-xl shadow-lg;
+  }
+
+  /* Hover Lift Effect */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+    @apply hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Pulse Animation */
+  .pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-soft {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  /* Fade In Animation */
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Scale Up Animation */
+  .scale-up {
+    animation: scaleUp 0.2s ease-out;
+  }
+
+  @keyframes scaleUp {
+    from {
+      transform: scale(0.95);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
 }

@@ -14,6 +14,8 @@ import {
   Megaphone,
   UserCheck,
   ChevronLeft,
+  ChevronDown,
+  ChevronRight,
   Settings,
   LogOut,
   LayoutGrid,
@@ -75,17 +77,26 @@ import {
   FileCheck,
   TrendingUp,
   FolderSearch,
-  Share2
+  Share2,
+  Repeat,
+  Timer,
+  AlertTriangle,
+  Columns,
+  GitBranch as WorkflowIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
 
 interface SubModule {
   name: string;
   href: string;
   icon: LucideIcon;
+  roles?: string[]; // Optional: restrict to specific roles. Empty array means all roles
+  badge?: string | number; // Optional: badge count for notifications
 }
 
 interface ModuleConfig {
@@ -130,12 +141,12 @@ const moduleConfigs: ModuleConfig[] = [
     icon: Megaphone,
     basePath: '/pr',
     subModules: [
+      { name: 'Dashboard', href: '/pr/dashboard', icon: LayoutGrid },
       { name: 'Announcements', href: '/pr/announcements', icon: Bell },
-      { name: 'Events Calendar', href: '/pr/calendar', icon: CalendarDays },
-      { name: 'Notifications', href: '/pr/notifications', icon: Bell },
-      { name: 'Broadcast Center', href: '/pr/broadcast', icon: Radio },
-      { name: 'Feedback & Grievance', href: '/pr/feedback', icon: MessageSquare },
-      { name: 'Social & Digital', href: '/pr/digital', icon: Share2 },
+      { name: 'Communication Center', href: '/pr/communication', icon: MessageSquare },
+      { name: 'Social & Digital', href: '/pr/social', icon: Share2 },
+      { name: 'Live Streaming', href: '/pr/live-streaming', icon: Radio },
+      { name: 'Devotee Experience', href: '/pr/devotee-experience', icon: Users },
     ],
   },
   {
@@ -170,9 +181,8 @@ const moduleConfigs: ModuleConfig[] = [
     icon: CheckSquare,
     basePath: '/tasks',
     subModules: [
-      { name: 'My Tasks', href: '/tasks/my-tasks', icon: CheckSquare },
-      { name: 'All Tasks', href: '/tasks/all', icon: ListTodo },
-      { name: 'Task Templates', href: '/tasks/templates', icon: FileText },
+      { name: 'Dashboard', href: '/tasks/dashboard', icon: LayoutGrid },
+      { name: 'Tasks', href: '/tasks/tasks', icon: ListTodo },
     ],
   },
   {
@@ -181,10 +191,11 @@ const moduleConfigs: ModuleConfig[] = [
     icon: GitBranch,
     basePath: '/branch',
     subModules: [
-      { name: 'Branches', href: '/branch/branches', icon: GitBranch },
-      { name: 'Branch Hierarchy', href: '/branch/hierarchy', icon: Network },
-      { name: 'Branch Operations', href: '/branch/operations', icon: Building2 },
-      { name: 'Branch Reports', href: '/branch/reports', icon: BarChart3 },
+      { name: 'Branch Directory', href: '/branch/directory', icon: GitBranch },
+      { name: 'Hierarchy & Regions', href: '/branch/hierarchy', icon: Network },
+      { name: 'Branch Users', href: '/branch/users', icon: Users },
+      { name: 'Access & Data Control', href: '/branch/access', icon: Eye },
+      { name: 'Branch Overview', href: '/branch/overview', icon: LayoutGrid },
     ],
   },
   {
@@ -318,14 +329,11 @@ const moduleConfigs: ModuleConfig[] = [
     icon: Landmark,
     basePath: '/assets',
     subModules: [
+      { name: 'Dashboard', href: '/assets/dashboard', icon: LayoutGrid },
       { name: 'Asset Master', href: '/assets/master', icon: FileBox },
-      { name: 'Locations', href: '/assets/locations', icon: MapPin },
-      { name: 'Custody Assignment', href: '/assets/custody', icon: UserCog },
-      { name: 'Allocation & Usage', href: '/assets/allocation', icon: UserRound },
       { name: 'Movement & Transfer', href: '/assets/movement', icon: Truck },
       { name: 'Maintenance & AMC', href: '/assets/maintenance', icon: ScrollText },
       { name: 'Audit & Verification', href: '/assets/audit', icon: ClipboardCheck },
-      { name: 'CV Evidence', href: '/assets/cv', icon: Eye },
       { name: 'Disposal', href: '/assets/disposal', icon: Trash2 },
       { name: 'Reports', href: '/assets/reports', icon: BarChart3 },
     ],
@@ -358,6 +366,12 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef<HTMLDivElement>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    management: false,
+    sla: false,
+    analytics: false,
+    admin: false,
+  });
 
   // Filter modules based on platform config
   const visibleModules = moduleConfigs.filter(module => {
@@ -503,8 +517,29 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
       {/* Module Sub-Navigation */}
       <ScrollArea className="flex-1 py-2 min-h-0 max-w-full overflow-hidden">
         <nav className="px-3 space-y-1 overflow-hidden max-w-full">
-          {currentModule?.subModules && currentModule.subModules.length > 0 ? (
-            currentModule.subModules.map((sub) => {
+          {!currentModule?.subModules || currentModule.subModules.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+              {!collapsed && "No sub-modules available"}
+            </div>
+          ) : (() => {
+            // Filter submodules based on role
+            const filteredSubModules = currentModule.subModules.filter((sub) => {
+              if (sub.roles && sub.roles.length > 0) {
+                if (!user || !user.role) return false;
+                return sub.roles.includes(user.role);
+              }
+              return true;
+            });
+
+            if (filteredSubModules.length === 0) {
+              return (
+                <div className="px-3 py-2 text-xs text-muted-foreground text-center">
+                  {!collapsed && "No accessible sub-modules"}
+                </div>
+              );
+            }
+
+            return filteredSubModules.map((sub) => {
               const SubIcon = sub.icon;
               const isActive = location.pathname === sub.href || location.pathname.startsWith(sub.href + '/');
 
@@ -524,21 +559,24 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
                 >
                   <SubIcon className={cn("h-4 w-4 shrink-0 transition-colors flex-shrink-0", isActive ? "text-primary" : "text-gray-900")} />
                   {!collapsed && (
-                    <span
-                      className="truncate min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
-                      style={{ maxWidth: 'calc(240px - 80px)' }}
-                    >
-                      {sub.name}
-                    </span>
+                    <>
+                      <span
+                        className="truncate min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                        style={{ maxWidth: 'calc(240px - 80px)' }}
+                      >
+                        {sub.name}
+                      </span>
+                      {sub.badge && (
+                        <span className="ml-auto px-2 py-0.5 text-xs font-semibold rounded-full bg-primary/20 text-primary">
+                          {sub.badge}
+                        </span>
+                      )}
+                    </>
                   )}
                 </NavLink>
               );
-            })
-          ) : (
-            <div className="px-3 py-2 text-xs text-muted-foreground text-center">
-              {!collapsed && "No sub-modules available"}
-            </div>
-          )}
+            });
+          })()}
         </nav>
       </ScrollArea>
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,45 @@ import { Input } from '@/components/ui/input';
 import { Plus, Edit, UserCheck, X } from 'lucide-react';
 import { AssetCustody } from '@/types/assets';
 import { CustodyAssignmentModal } from '@/components/assets/CustodyAssignmentModal';
-import { dummyAssetCustody, dummyAssets } from '@/data/assets-data';
+import { dummyAssetCustody } from '@/data/assets-data';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/contexts/AuthContext';
+import { getStoredAssets, updateAsset } from '@/lib/assets/asset-store';
 
 export default function AssetCustody() {
   const { checkModuleAccess, checkWriteAccess } = usePermissions();
   const { user } = useAuth();
   const [custody, setCustody] = useState<AssetCustody[]>(dummyAssetCustody);
+  const [assets, setAssets] = useState(getStoredAssets());
   const [custodyModalOpen, setCustodyModalOpen] = useState(false);
   const [editingCustody, setEditingCustody] = useState<AssetCustody | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [custodianTypeFilter, setCustodianTypeFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Load assets from localStorage on mount and when page becomes visible
+  useEffect(() => {
+    const loadAssets = () => {
+      const storedAssets = getStoredAssets();
+      setAssets(storedAssets);
+    };
+    
+    loadAssets();
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAssets();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', loadAssets);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', loadAssets);
+    };
+  }, []);
 
   if (!checkModuleAccess('assets')) {
     return (
@@ -50,6 +76,17 @@ export default function AssetCustody() {
   const handleSaveCustody = (data: Partial<AssetCustody>) => {
     if (editingCustody) {
       setCustody(custody.map(c => c.id === editingCustody.id ? { ...c, ...data } : c));
+      
+      // Update asset custodian in Asset Master
+      if (data.assetId && (data.custodianId || data.custodianName)) {
+        updateAsset(data.assetId, {
+          currentCustodianId: data.custodianId || editingCustody.custodianId,
+          currentCustodianName: data.custodianName || editingCustody.custodianName,
+          currentCustodianType: data.custodianType || editingCustody.custodianType,
+        });
+        // Reload assets to reflect changes
+        setAssets(getStoredAssets());
+      }
     } else {
       const newCustody: AssetCustody = {
         ...data,
@@ -61,6 +98,17 @@ export default function AssetCustody() {
         createdByName: user?.name || 'User',
       } as AssetCustody;
       setCustody([...custody, newCustody]);
+      
+      // Update asset custodian in Asset Master
+      if (data.assetId && data.custodianId && data.custodianName) {
+        updateAsset(data.assetId, {
+          currentCustodianId: data.custodianId,
+          currentCustodianName: data.custodianName,
+          currentCustodianType: data.custodianType || 'individual',
+        });
+        // Reload assets to reflect changes
+        setAssets(getStoredAssets());
+      }
     }
     setEditingCustody(null);
     setCustodyModalOpen(false);
@@ -68,7 +116,19 @@ export default function AssetCustody() {
 
   const handleReleaseCustody = (custodyId: string) => {
     if (confirm('Are you sure you want to release this custody assignment?')) {
+      const releasedCustody = custody.find(c => c.id === custodyId);
       setCustody(custody.map(c => c.id === custodyId ? { ...c, status: 'released' as const } : c));
+      
+      // Clear custodian from asset in Asset Master
+      if (releasedCustody?.assetId) {
+        updateAsset(releasedCustody.assetId, {
+          currentCustodianId: undefined,
+          currentCustodianName: undefined,
+          currentCustodianType: undefined,
+        });
+        // Reload assets to reflect changes
+        setAssets(getStoredAssets());
+      }
     }
   };
 
@@ -219,7 +279,7 @@ export default function AssetCustody() {
           }}
           onSave={handleSaveCustody}
           custody={editingCustody || undefined}
-          assets={dummyAssets}
+          assets={assets}
         />
       )}
     </MainLayout>

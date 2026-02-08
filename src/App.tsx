@@ -71,14 +71,12 @@ import Applications from "./pages/platform/Applications";
 import Subscriptions from "./pages/platform/Subscriptions";
 import Settings from "./pages/platform/Settings";
 import Analytics from "./pages/platform/Analytics";
+import AssetDashboard from "./pages/assets/AssetDashboard";
 import AssetMaster from "./pages/assets/AssetMaster";
-import AssetLocations from "./pages/assets/AssetLocations";
-import AssetCustody from "./pages/assets/AssetCustody";
-import AssetAllocation from "./pages/assets/AssetAllocation";
+import AssetMasterForm from "./pages/assets/AssetMasterForm";
 import AssetMovement from "./pages/assets/AssetMovement";
 import Maintenance from "./pages/assets/Maintenance";
 import AssetAudit from "./pages/assets/AssetAudit";
-import CVEvidence from "./pages/assets/CVEvidence";
 import AssetDisposal from "./pages/assets/AssetDisposal";
 import AssetReports from "./pages/assets/AssetReports";
 import ProjectsOverview from "./pages/projects/ProjectsOverview";
@@ -87,14 +85,20 @@ import ProjectDetails from "./pages/projects/ProjectDetails";
 import ProjectEditor from "./pages/projects/ProjectEditor";
 import MyActivities from "./pages/projects/MyActivities";
 import ProjectReports from "./pages/projects/ProjectReports";
+import PRDashboard from "./pages/pr/PRDashboard";
 import Announcements from "./pages/pr/Announcements";
+import CommunicationCenter from "./pages/pr/communication/CommunicationCenter";
+import SocialDigital from "./pages/pr/SocialDigital";
+import LiveStreaming from "./pages/pr/LiveStreaming";
+import CommunityFeed from "./pages/pr/devotee-experience/CommunityFeed";
+import SupportTickets from "./pages/pr/devotee-experience/SupportTickets";
+// Legacy imports (keeping for backward compatibility)
 import Events from "./pages/pr/Events";
 import EventEditor from "./pages/pr/EventEditor";
 import Notifications from "./pages/pr/Notifications";
 import BroadcastCenter from "./pages/pr/BroadcastCenter";
 import BroadcastCampaignBuilder from "./pages/pr/BroadcastCampaignBuilder";
 import Feedback from "./pages/pr/Feedback";
-import SocialDigital from "./pages/pr/SocialDigital";
 import KnowledgeDashboard from "./pages/knowledge/KnowledgeDashboard";
 import CategoriesManagement from "./pages/knowledge/CategoriesManagement";
 import KnowledgeDocuments from "./pages/knowledge/KnowledgeDocuments";
@@ -103,6 +107,13 @@ import ApprovalManagement from "./pages/knowledge/ApprovalManagement";
 import BetaConversationTesting from "./pages/knowledge/BetaConversationTesting";
 import DevoteeChat from "./pages/knowledge/DevoteeChat";
 import NotFound from "./pages/NotFound";
+import TaskDashboard from "./pages/tasks/TaskDashboard";
+import Tasks from "./pages/tasks/Tasks";
+import BranchDirectory from "./pages/branch/BranchDirectory";
+import BranchHierarchy from "./pages/branch/BranchHierarchy";
+import BranchUsers from "./pages/branch/BranchUsers";
+import BranchAccess from "./pages/branch/BranchAccess";
+import BranchOverview from "./pages/branch/BranchOverview";
 import { PlatformConfigProvider } from "./contexts/PlatformConfigContext";
 
 const queryClient = new QueryClient();
@@ -216,15 +227,14 @@ function AppRoutes() {
       <Route path="/platform/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
       {/* Asset Management Routes */}
-      <Route path="/assets" element={<ProtectedRoute><Navigate to="/assets/master" replace /></ProtectedRoute>} />
+      <Route path="/assets" element={<ProtectedRoute><Navigate to="/assets/dashboard" replace /></ProtectedRoute>} />
+      <Route path="/assets/dashboard" element={<ProtectedRoute><AssetDashboard /></ProtectedRoute>} />
       <Route path="/assets/master" element={<ProtectedRoute><AssetMaster /></ProtectedRoute>} />
-      <Route path="/assets/locations" element={<ProtectedRoute><AssetLocations /></ProtectedRoute>} />
-      <Route path="/assets/custody" element={<ProtectedRoute><AssetCustody /></ProtectedRoute>} />
-      <Route path="/assets/allocation" element={<ProtectedRoute><AssetAllocation /></ProtectedRoute>} />
+      <Route path="/assets/master/new" element={<ProtectedRoute><AssetMasterForm /></ProtectedRoute>} />
+      <Route path="/assets/master/:id/edit" element={<ProtectedRoute><AssetMasterForm /></ProtectedRoute>} />
       <Route path="/assets/movement" element={<ProtectedRoute><AssetMovement /></ProtectedRoute>} />
       <Route path="/assets/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
       <Route path="/assets/audit" element={<ProtectedRoute><AssetAudit /></ProtectedRoute>} />
-      <Route path="/assets/cv" element={<ProtectedRoute><CVEvidence /></ProtectedRoute>} />
       <Route path="/assets/disposal" element={<ProtectedRoute><AssetDisposal /></ProtectedRoute>} />
       <Route path="/assets/reports" element={<ProtectedRoute><AssetReports /></ProtectedRoute>} />
       
@@ -239,7 +249,21 @@ function AppRoutes() {
       <Route path="/projects/reports" element={<ProtectedRoute><ProjectReports /></ProtectedRoute>} />
       
       {/* PR & Communication routes */}
+      <Route path="/pr" element={<ProtectedRoute><Navigate to="/pr/dashboard" replace /></ProtectedRoute>} />
+      <Route path="/pr/dashboard" element={<ProtectedRoute><PRDashboard /></ProtectedRoute>} />
       <Route path="/pr/announcements" element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
+      <Route path="/pr/communication" element={<ProtectedRoute><CommunicationCenter /></ProtectedRoute>} />
+      <Route path="/pr/communication/manual" element={<ProtectedRoute><CommunicationCenter /></ProtectedRoute>} />
+      <Route path="/pr/communication/bulk" element={<ProtectedRoute><CommunicationCenter /></ProtectedRoute>} />
+      <Route path="/pr/communication/scheduled" element={<ProtectedRoute><CommunicationCenter /></ProtectedRoute>} />
+      <Route path="/pr/communication/templates" element={<ProtectedRoute><CommunicationCenter /></ProtectedRoute>} />
+      <Route path="/pr/communication/reports" element={<ProtectedRoute><CommunicationCenter /></ProtectedRoute>} />
+      <Route path="/pr/social" element={<ProtectedRoute><SocialDigital /></ProtectedRoute>} />
+      <Route path="/pr/live-streaming" element={<ProtectedRoute><LiveStreaming /></ProtectedRoute>} />
+      <Route path="/pr/devotee-experience" element={<ProtectedRoute><Navigate to="/pr/devotee-experience/feed" replace /></ProtectedRoute>} />
+      <Route path="/pr/devotee-experience/feed" element={<ProtectedRoute><CommunityFeed /></ProtectedRoute>} />
+      <Route path="/pr/devotee-experience/support" element={<ProtectedRoute><SupportTickets /></ProtectedRoute>} />
+      {/* Legacy PR routes for backward compatibility */}
       <Route path="/pr/calendar" element={<ProtectedRoute><Events /></ProtectedRoute>} />
       <Route path="/pr/calendar/new" element={<ProtectedRoute><EventEditor /></ProtectedRoute>} />
       <Route path="/pr/calendar/:id" element={<ProtectedRoute><EventEditor /></ProtectedRoute>} />
@@ -248,15 +272,25 @@ function AppRoutes() {
       <Route path="/pr/broadcast/new" element={<ProtectedRoute><BroadcastCampaignBuilder /></ProtectedRoute>} />
       <Route path="/pr/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
       <Route path="/pr/digital" element={<ProtectedRoute><SocialDigital /></ProtectedRoute>} />
-      <Route path="/pr/*" element={<ProtectedRoute><Navigate to="/pr/announcements" replace /></ProtectedRoute>} />
       <Route path="/crm/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/tasks/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      
+      {/* Task Management routes */}
+      <Route path="/tasks" element={<ProtectedRoute><Navigate to="/tasks/dashboard" replace /></ProtectedRoute>} />
+      <Route path="/tasks/dashboard" element={<ProtectedRoute><TaskDashboard /></ProtectedRoute>} />
+      <Route path="/tasks/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+      
       <Route path="/crowd/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/devotee/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/freelancer/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/vip/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/events/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/branch/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      {/* Branch Management Module */}
+      <Route path="/branch" element={<ProtectedRoute><Navigate to="/branch/overview" replace /></ProtectedRoute>} />
+      <Route path="/branch/directory" element={<ProtectedRoute><BranchDirectory /></ProtectedRoute>} />
+      <Route path="/branch/hierarchy" element={<ProtectedRoute><BranchHierarchy /></ProtectedRoute>} />
+      <Route path="/branch/users" element={<ProtectedRoute><BranchUsers /></ProtectedRoute>} />
+      <Route path="/branch/access" element={<ProtectedRoute><BranchAccess /></ProtectedRoute>} />
+      <Route path="/branch/overview" element={<ProtectedRoute><BranchOverview /></ProtectedRoute>} />
       <Route path="/institution/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       {/* Knowledge routes */}
       <Route path="/knowledge" element={<ProtectedRoute><Navigate to="/knowledge/dashboard" replace /></ProtectedRoute>} />
