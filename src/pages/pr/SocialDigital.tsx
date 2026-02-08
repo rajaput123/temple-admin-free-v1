@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, Share2, Calendar, Facebook, Twitter, Instagram, History } from 'lucide-react';
+import { Plus, Share2, Calendar, Facebook, Twitter, Instagram } from 'lucide-react';
 import { dummySocialChannels, dummySocialPosts, dummyContentCalendars } from '@/data/communications-data';
 import type { SocialPost, SocialPlatform } from '@/types/communications';
 import { usePermissions } from '@/hooks/usePermissions';
-import { useToast } from '@/components/ui/use-toast';
 import { CreatePostModal } from '@/components/pr/communication/CreatePostModal';
 import { PostLog } from '@/components/pr/communication/PostLog';
 import { toast } from 'sonner';
@@ -30,7 +29,6 @@ export default function SocialDigital() {
   const [channels, setChannels] = useState(dummySocialChannels);
   const [posts, setPosts] = useState<SocialPost[]>(dummySocialPosts);
   const [calendars] = useState(dummyContentCalendars);
-  const [searchQuery, setSearchQuery] = useState('');
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -69,9 +67,6 @@ export default function SocialDigital() {
 
   const canWrite = checkWriteAccess('communications');
 
-  const filteredPosts = posts.filter((post) =>
-    post.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleCreatePost = (data: {
     content: string;

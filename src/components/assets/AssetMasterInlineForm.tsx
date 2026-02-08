@@ -243,7 +243,15 @@ export function AssetMasterInlineForm({
   useEffect(() => {
     if (asset) {
       // Find major category ID from categories prop
-      const majorCat = categories.find(cat => cat.id === asset.id || cat.name === asset.name);
+      // Match by category type (movable/immovable) - major categories typically don't have subCategory
+      // If asset has a subCategory, we still need to find the parent major category
+      const majorCat = categories.find(cat => {
+        // Must match the category type (movable/immovable)
+        if (cat.category !== asset.category) return false;
+        // Prefer major categories (those without subCategory) as they are the parent categories
+        // If no major category found, fall back to any matching category
+        return !cat.subCategory;
+      }) || categories.find(cat => cat.category === asset.category);
       setFormData({
         name: asset.name,
         category: asset.category,
